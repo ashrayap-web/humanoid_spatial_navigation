@@ -50,6 +50,7 @@ STAGE_ENTRIES = {
     "c7": ("changedet.stages.c7_verify", "verify_changes"),
     "c8": ("changedet.stages.c8_describe", "describe"),
     "c10": ("changedet.stages.c10_visualize", "visualize"),
+    "c11": ("changedet.stages.c11_evaluate", "evaluate"),
 }
 
 
@@ -93,12 +94,16 @@ def _apply_overrides(args: argparse.Namespace) -> None:
     attach_file_log(cache.run_path(args.run, LOG_RELPATH))
 
 
-def _call(stage: str, run: str, force: bool, open_viewer: bool = False) -> None:
+def _call(
+    stage: str, run: str, force: bool, open_viewer: bool = False, gt: str | None = None
+) -> None:
     module, entry = STAGE_ENTRIES[stage]
     fn = getattr(importlib.import_module(module), entry)
     log.info("== %s: %s", stage, STAGES[stage])
     if stage == "c10":
         fn(run, open_viewer=open_viewer, force=force)
+    elif stage == "c11":
+        fn(run, gt, force=force)
     else:
         fn(run, force=force)
 
@@ -109,7 +114,7 @@ def run_stage(stage: str, args: argparse.Namespace) -> int:
     if stage not in STAGE_ENTRIES:
         log.warning("%s (%s) is not implemented yet", stage, STAGES[stage])
         return 1
-    _call(stage, args.run, args.force, getattr(args, "open", False))
+    _call(stage, args.run, args.force, getattr(args, "open", False), getattr(args, "gt", None))
     return 0
 
 
@@ -138,13 +143,62 @@ def cmd_all(args: argparse.Namespace) -> int:
             log.warning("== %s: %s — not implemented yet, skipped", stage, STAGES[stage])
             continue
         t0 = time.perf_counter()
-        _call(stage, args.run, args.force or k >= start, args.open)
+        _call(stage, args.run, args.force or k >= start, args.open, args.gt)
         log.info("== %s done in %.1f s", stage, time.perf_counter() - t0)
     log.info(
         "Pipeline finished in %.1f s. Report: %s",
         time.perf_counter() - total,
         cache.run_path(args.run, "report/report.md"),
     )
+    return 0
+
+
+def cmd_eval_all(args: argparse.Namespace) -> int:
+    """Evaluate every ground-truth pair whose run exists, plus the synthetic C5 suite."""
+    from changedet import eval_synthetic
+    from changedet.stages.c11_evaluate import _fmt, evaluate, load_ground_truth
+
+    rows, details = [], []
+    for gt_path in sorted(Path(args.gt_dir).glob("*.json")):
+        gt = load_ground_truth(gt_path)
+        if not cache.exists(gt.run, INPUTS_RELPATH):
+            rows.append(
+                f"| {gt.pair} | `{gt.run}` | {len(gt.changes)} | run missing — "
+                f"`all --run {gt.run} --a … --b …` first | | |"
+            )
+            continue
+        r = evaluate(gt.run, str(gt_path))
+        a, c = r["all"]["overall"], r["confirmed_only"]["overall"]
+        rows.append(
+            f"| {gt.pair} | `{gt.run}` | {len(gt.changes)} | "
+            f"{r['n_confirmed']} / {r['n_unverified']} | "
+            f"{_fmt(a['precision'])} / {_fmt(a['recall'])} / {_fmt(a['f1'])} | "
+            f"{_fmt(c['precision'])} / {_fmt(c['recall'])} / {_fmt(c['f1'])} |"
+        )
+        details.append(cache.run_path(gt.run, "eval/eval.md").read_text())
+    cfg = load_config()
+    synthetic = eval_synthetic.run_suite(cfg, args.scenes or cfg.eval.synthetic_scenes, cfg.seed)
+    text = "\n".join(
+        [
+            "# Evaluation summary",
+            "",
+            "| pair | run | GT changes | predicted (confirmed / unverified) | "
+            "P / R / F1 (all claims) | P / R / F1 (confirmed only) |",
+            "|---|---|---|---|---|---|",
+            *rows,
+            "",
+            eval_synthetic.markdown(synthetic),
+            "---",
+            "",
+        ]
+        + details
+    )
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(text)
+    cache.save_json(out.with_suffix(".json"), synthetic)
+    log.info("Wrote %s", out)
+    print(text)
     return 0
 
 
@@ -189,6 +243,8 @@ def build_parser() -> argparse.ArgumentParser:
         add_common(p)
         if stage == "c10":
             p.add_argument("--open", action="store_true", help="open the rerun viewer")
+        if stage == "c11":
+            p.add_argument("--gt", required=True, help="ground-truth JSON")
         p.set_defaults(func=lambda a, s=stage: run_stage(s, a))
 
     p = sub.add_parser("all", help="run the whole pipeline (cached stages are skipped)")
@@ -205,6 +261,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--gt", help="ground-truth JSON: also run C11 evaluation")
     p.add_argument("--open", action="store_true", help="open the rerun viewer at the end")
     p.set_defaults(func=cmd_all)
+
+    p = sub.add_parser("eval-all", help="evaluate every ground-truth pair + the synthetic suite")
+    p.add_argument("--gt-dir", default="data/ground_truth")
+    p.add_argument("--scenes", type=int, default=None, help="synthetic scenes (default: config)")
+    p.add_argument("--out", default="runs/eval_summary.md")
+    p.set_defaults(func=cmd_eval_all)
 
     p = sub.add_parser("export", help="copy report, images and a small .rrd to a folder")
     p.add_argument("--run", required=True)

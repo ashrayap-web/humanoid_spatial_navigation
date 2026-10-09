@@ -122,12 +122,14 @@ def test_visualize_builds_rrd_and_hero_images() -> None:
 def test_all_runs_stages_in_order_with_from(monkeypatch, record3d_export) -> None:
     calls = []
     monkeypatch.setattr(
-        cli, "_call", lambda stage, run, force, open_viewer=False: calls.append((stage, force))
+        cli,
+        "_call",
+        lambda stage, run, force, open_viewer=False, gt=None: calls.append((stage, force)),
     )
     args = ["all", "--run", "demo", "--a", str(record3d_export), "--b", str(record3d_export)]
     assert cli.main(args) == 0
-    implemented = [s for s in cli.STAGES if s in cli.STAGE_ENTRIES]
-    assert [s for s, _ in calls] == implemented  # c7, c9 skipped; c11 only with --gt
+    implemented = [s for s in cli.STAGES if s in cli.STAGE_ENTRIES and s != "c11"]
+    assert [s for s, _ in calls] == implemented  # c9 skipped; c11 only with --gt
     assert not any(force for _, force in calls)
 
     calls.clear()
@@ -135,6 +137,16 @@ def test_all_runs_stages_in_order_with_from(monkeypatch, record3d_export) -> Non
     forced = {s for s, force in calls if force}
     assert forced == {s for s in implemented if list(cli.STAGES).index(s) >= 3}
     assert cli.main(["all", "--run", "nope"]) == 1  # not initialised
+
+    calls.clear()
+    gt_calls = []
+    monkeypatch.setattr(
+        cli,
+        "_call",
+        lambda stage, run, force, open_viewer=False, gt=None: gt_calls.append((stage, gt)),
+    )
+    assert cli.main(["all", "--run", "demo", "--gt", "gt.json"]) == 0
+    assert gt_calls[-1] == ("c11", "gt.json")
 
 
 def test_export_rewrites_image_links(tmp_path) -> None:

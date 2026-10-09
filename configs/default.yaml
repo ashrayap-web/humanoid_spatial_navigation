@@ -155,5 +155,7 @@ viz:               # C10
   top_down_resolution: 1024 # unused (matplotlib figure sizes are fixed)
 
 eval:              # C11
-  pos_tol: 0.5              # m
-  label_sim_thresh: 0.8
+  pos_tol: 0.5              # m, horizontal; used only if the ground truth gives positions
+  use_clip: true            # label match by CLIP text similarity (besides whole-word match)
+  label_sim_thresh: 0.85    # CLIP "a photo of a X" cosine: synonyms 0.86-0.92, unrelated <= 0.82
+  synthetic_scenes: 200     # eval-all: scenes in the synthetic C5 suite (~4 min)

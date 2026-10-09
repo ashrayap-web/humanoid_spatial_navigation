@@ -192,17 +192,39 @@ confirmed change.
 
 ## 5. Evaluation
 
-The automatic evaluation stage (C11) is not built yet. So far there is **one** real recording pair,
-with one true change; this is a sanity check, not a benchmark.
+`./scripts/eval_all.sh` scores every recording pair that has a ground-truth file in
+`data/ground_truth/`, plus a synthetic suite. The full output is in
+[`examples/eval_summary.md`](examples/eval_summary.md). A prediction counts as correct when its
+type matches and its label is compatible: one name contains the other ("office chair" ~ "chair"),
+or their CLIP text similarity is ≥ 0.85 ("backpack" ~ "bag").
 
-| pair | true changes | confirmed | correct confirmed | unverified | rejected false alarms |
-|---|---|---|---|---|---|
-| `main` (vid1 → vid2) | 1 (bag removed) | 1 | 1 (the bag) | 2 (both spurious) | 5 |
+**Real recordings: one pair, one true change.** This is a sanity check, not a benchmark.
 
-All 13 objects matched one-to-one across recordings are matched correctly, and none is falsely
-reported as moved. The synthetic tests (`uv run pytest`, 93 tests) cover every change type,
-including rotation in place, identical objects swapping places, and replacements. A
-**no-change control recording** is the next thing to add.
+| pair | true changes | predicted (confirmed / unverified) | P / R / F1, all claims | P / R / F1, confirmed only |
+|---|---|---|---|---|
+| `main` | 1 (bag removed) | 1 / 2 | 0.33 / 1.00 / 0.50 | **1.00 / 1.00 / 1.00** |
+
+The confirmed claim is the bag, which is correct. The two unverified claims (the clothes rail and
+a TV-reflection fragment) are false; that is what "could not be verified" is there to flag. Five
+more false candidates were rejected before scoring. A **no-change control recording** is the
+most useful next addition.
+
+**Synthetic suite: 200 scenes, 414 changes, every change type.** This exercises matching,
+classification and motion estimation (C5) on fused objects. Embeddings mimic the real data's
+statistics, views are partial and noisy, and some scenes include identical twins. It does *not*
+exercise detection, fusion or visibility.
+
+| | TP | FP | FN | precision | recall | F1 |
+|---|---|---|---|---|---|---|
+| overall | 408 | 2 | 6 | 1.00 | 0.99 | 0.99 |
+| removed | 84 | 0 | 0 | 1.00 | 1.00 | 1.00 |
+| added | 83 | 0 | 0 | 1.00 | 1.00 | 1.00 |
+| moved (incl. rotated in place) | 157 | 2 | 6 | 0.99 | 0.96 | 0.98 |
+| replaced | 84 | 0 | 0 | 1.00 | 1.00 | 1.00 |
+
+Moved objects: median yaw error 0.7°. All 6 misses are objects **rotated in place** while only
+partly visible: C5 prefers "stayed put" unless a move fits clearly better. Relaxing that
+preference catches 4–5 of them but adds 7–12 false moves, so it stays conservative.
 
 ---
 
@@ -228,7 +250,8 @@ including rotation in place, identical objects swapping places, and replacements
 - Calibrate the C7 rejection threshold on more pairs. On the example the clothes rail is
   correctly judged unchanged, but at 0.75 confidence, just under the 0.8 needed to reject.
 - C9: navigation impact (occupancy grid diff + path re-planning).
-- C11: evaluation over a no-change control and a "hard" pair (a change hidden behind furniture).
+- Record a no-change control and a "hard" pair (a change hidden behind furniture) and add their
+  ground truth; `eval_all.sh` picks them up automatically.
 - C8 full: LLM-written sentences grounded in the same spatial facts.
 - Plain video input via MASt3R/VGGT; masking glossy surfaces in the fused clouds as well.
 

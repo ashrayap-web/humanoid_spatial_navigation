@@ -100,6 +100,20 @@ def embed_images(images: list, clip_id: str, dino_id: str, device: str, batch_si
     return normalise(clip_out), normalise(dino_out)
 
 
+def embed_texts(texts: list[str], clip_id: str, device: str, template: str = "a photo of a {}"):
+    """L2-normalised CLIP text embeddings (N, D) float32 of ``template.format(text)``."""
+    import numpy as np
+    import torch
+
+    processor, model = clip(clip_id, device)
+    with torch.inference_mode():
+        x = processor(
+            text=[template.format(t) for t in texts], return_tensors="pt", padding=True
+        ).to(device)
+        e = model.get_text_features(**x).pooler_output.float().cpu().numpy()
+    return (e / np.linalg.norm(e, axis=1, keepdims=True)).astype(np.float32)
+
+
 def unload() -> None:
     """Drop all cached models and free GPU memory (between stages)."""
     import torch

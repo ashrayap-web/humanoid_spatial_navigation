@@ -45,7 +45,7 @@ Only build that component. Do not implement future components early.
 | C8  | Semantic description & report           | basic done (template); full (LLM) not started | MVP (basic) / Core (full) |
 | C9  | Navigation impact analysis              | not started | Stretch   |
 | C10 | Interactive visualization               | basic done (+ hero.png/gif); full not started | MVP (basic) / Core (full) |
-| C11 | Evaluation against ground truth         | not started | Core      |
+| C11 | Evaluation against ground truth         | done        | Core      |
 | C12 | End-to-end CLI, packaging, README       | done (sample-data link TBD) | MVP       |
 
 **MVP** = meets every minimum requirement of the challenge. It must be working end-to-end
@@ -1069,6 +1069,24 @@ spawned only if `$DISPLAY` is set, else the `rerun --web-viewer` command is prin
 `main`, plus `nochange` / `main2` / `hard` once recorded) and for the synthetic suite; the README
 quotes it and states honestly how many real changes it is based on.
 
+**As built (2026-10-09):** `evaluate(run, gt_path, force=False)` (`force` for CLI uniformity).
+Predictions = latest change list minus UNCHANGED/REJECTED; labels considered = detector label + VLM
+`label`/`refined_label`. Label compatible if one contains the other as whole words, or CLIP text
+cosine (prompt "a photo of a X") ≥ `eval.label_sim_thresh` **0.85** (measured: synonyms 0.86–0.92,
+unrelated pairs up to 0.82; the spec's 0.8 would match chair/table). GT `position` is compared
+**horizontally** with `pos_tol`; optional `distance_m` gives the moved-distance error. Scored twice:
+all claims (spec definition) and confirmed only. Greedy one-to-one matching, confirmed preferred;
+REPLACED ↔ REMOVED+ADDED both directions. GT files may name their run (`"run": "demo"`).
+`eval-all` (`scripts/eval_all.sh`) evaluates every GT pair whose run exists + the **synthetic suite**
+(`changedet/eval_synthetic.py`, `eval.synthetic_scenes` = 200, ~4 min): random rooms of asymmetric
+L-shaped objects, 1–3 known changes each (moved, rotated in place, removed, added, replaced), partial
+noisy views per session, CLIP/DINOv2-like embeddings with the real data's statistics, 15% identical
+twins — scored through the real `c5.classify`. Writes `runs/eval_summary.{md,json}`; copied to
+`examples/eval_summary.md`.
+**Result (2026-10-09):** ✅ `main`: confirmed only P/R/F1 1.00/1.00/1.00 (the bag); all claims
+0.33/1.00/0.50 (2 unverified false claims). Synthetic (414 changes): F1 0.99 — removed/added/replaced
+1.00; moved 0.98 (6 FN, all rotated-in-place while partly visible; 2 FP); median yaw error 0.7°.
+
 ---
 
 ### C12 — End-to-end CLI, packaging, README
@@ -1188,6 +1206,11 @@ Append one entry per finished component: date, component, decision, reason.
 | 2026-10-09 | C7 | Anthropic SDK with structured outputs + server-side refusal fallback; tolerant JSON parser kept | Structured output guarantees JSON; the parser covers cached/raw text and other providers; fallback re-runs safety declines instead of failing the stage |
 | 2026-10-09 | C7 | The VLM may only reject (confident `change_present: false`), never confirm or add | Keeps geometry in charge ("VLM as verifier, not detector"); an UNVERIFIED change stays UNVERIFIED even if the VLM thinks it is real |
 | 2026-10-09 | C7 | Evidence images written even without credentials | Lets a human (or the README) inspect the before/after pairs |
+| 2026-10-09 | C11 | `label_sim_thresh` 0.85 (not 0.8) with the "a photo of a X" prompt, plus whole-word containment | CLIP text cosines between unrelated nouns reach 0.82 (bag/box, bed/pillow, chair/table 0.81) |
+| 2026-10-09 | C11 | Score both "all claims" and "confirmed only" | Spec counts unverified as predictions; confirmed-only shows what the system asserts with confidence |
+| 2026-10-09 | C11 | GT positions compared horizontally | GT is marked on a floor plan (z = 0) while predictions are centroids; 3D distance rejected correct tall objects in the synthetic suite |
+| 2026-10-09 | C11 | Synthetic suite scores C5 only, with embeddings matching measured real statistics | Only one real change exists; the suite gives every change type a number, and says clearly what it does not test |
+| 2026-10-09 | C5 | Keep `stay_margin` 0.1 after a sweep on 200 synthetic scenes | 0.1: F1 0.990 (moved 6 FN / 2 FP); 0.05: 0.987 (2 FN / 9 FP); 0.02: 0.982 (1 FN / 14 FP) — false moves cost more than missed in-place rotations |
 
 ---
 
