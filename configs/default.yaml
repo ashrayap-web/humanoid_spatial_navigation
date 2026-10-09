@@ -133,10 +133,15 @@ report:            # C8
 
 nav:               # C9
   cell_size: 0.05           # m
-  robot_height: 1.2         # m
-  robot_radius: 0.25        # m
+  robot_height: 1.2         # m, points below this (and above min_z) are obstacles
+  robot_radius: 0.2         # m, obstacles are inflated by this (a ~40 cm wide robot)
   min_z: 0.05               # m
-  start: null               # [x, y] in world frame, null = automatic
+  min_points: 3             # points per cell to count as an obstacle (noise)
+  floor_tol: 0.05           # m, |z| below this is seen floor
+  walked_radius: 0.15       # m, cells around the camera path count as free floor
+  change_clearance: 0.03    # m, cloud points this close to a changed object belong to it
+  same_route_tol: 0.1       # m, route length differences below this are "not affected"
+  start: null               # [x, y] in world frame, null = automatic (farthest walkable pair)
   goal: null
   unknown_is_free: false
 

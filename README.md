@@ -110,7 +110,7 @@ usably.
                         │
                 C7 visual double-check (optional)   Claude looks at before/after images and may reject a candidate
                         │
-                C8 report  ·  C10 3D viewer
+                C8 report  ·  C9 robot navigation impact  ·  C10 3D viewer
 ```
 
 **C1 — Keyframes.** Every frame (~4 000 per recording) is scored for sharpness. The sharpest frame
@@ -168,6 +168,22 @@ must be named. A sentence that fails, or every sentence when there are no creden
 to a template ("has been removed" / "may have been removed" / "seemed to have been removed", plus
 the evidence). The fact list is shown under each change in `report.md`, so every sentence can be
 checked.
+
+**C9 — What it means for a robot.** One occupancy grid is shared by both recordings, so that
+differences in what each recording happened to see cannot look like changes. It combines:
+- the floor seen in either recording, plus the path the camera walked;
+- the obstacles below robot height, minus the changed objects.
+
+Then:
+- "Before" adds the changed objects as they were, and "after" adds them as they are.
+- Obstacles are inflated by the robot's radius (0.2 m).
+- A route is planned between the two farthest-apart walkable spots, with A* on both grids.
+
+The report says whether the route got longer, got blocked, or stayed the same, and which change is
+responsible. On the example: *"Navigation is not affected: the route from near the bed to near the
+chair is 1.7 m both before and after"* — the bag lay on the bed, which blocks a robot either way.
+
+![robot navigation before/after](examples/demo/nav_diff.png)
 
 **C10 — Viewer.** A rerun recording that opens with a fixed layout:
 - the 3D scene: changes coloured by type, unchanged objects dimmed, both camera paths;
@@ -267,7 +283,8 @@ preference catches 4–5 of them but adds 7–12 false moves, so it stays conser
 
 - Calibrate the C7 rejection threshold on more pairs. On the example the clothes rail is
   correctly judged unchanged, but at 0.75 confidence, just under the 0.8 needed to reject.
-- C9: navigation impact (occupancy grid diff + path re-planning).
+- Record a pair with a change on the floor (a box in the walkway) to show C9 re-planning on real
+  data; so far the detour/blocking case is covered by tests only.
 - Record a no-change control and a "hard" pair (a change hidden behind furniture) and add their
   ground truth; `eval_all.sh` picks them up automatically.
 - Directions relative to the room itself ("by the window") rather than to the recording

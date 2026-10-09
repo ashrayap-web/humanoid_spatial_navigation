@@ -8,7 +8,14 @@ from pathlib import Path
 
 from changedet.core.cache import run_dir, run_path
 
-FILES = ["report/report.md", "report/changes.json", "viz/hero.png", "viz/hero.gif", "viz/final.rrd"]
+FILES = [
+    "report/report.md",
+    "report/changes.json",
+    "viz/hero.png",
+    "viz/hero.gif",
+    "viz/final.rrd",
+    "nav/nav_diff.png",
+]
 
 
 def export_run(run: str, out: Path) -> Path:
@@ -28,7 +35,8 @@ def export_run(run: str, out: Path) -> Path:
         (out / "crops").mkdir(exist_ok=True)
         for crop in crops:
             shutil.copyfile(run_dir(run) / crop, out / "crops" / Path(crop).name)
-        report.write_text(re.sub(r"\(\.\./objects/crops/", "(crops/", text))
+        text = re.sub(r"\(\.\./objects/crops/", "(crops/", text)
+        report.write_text(text.replace("(../nav/nav_diff.png)", "(nav_diff.png)"))
     evidence = run_path(run, "viz/c7_evidence")
     if evidence.exists():  # C7 before/after pairs with the VLM verdict
         shutil.rmtree(out / "evidence", ignore_errors=True)

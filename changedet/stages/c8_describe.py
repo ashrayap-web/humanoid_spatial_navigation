@@ -300,6 +300,10 @@ def write_markdown(
         lines += [""] + [f"- **{c.id}** {c.description}" for c in rejected] + [""]
     else:
         lines += ["None.", ""]
+    if exists(run, "nav/paths.json"):  # C9 ran before: keep its section
+        from changedet.stages.c9_navigation import navigation_markdown
+
+        lines += [navigation_markdown(load_json(run_path(run, "nav/paths.json")))]
     st = report.stats
     lines += [
         "## Run information",

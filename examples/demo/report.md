@@ -72,6 +72,16 @@ bed, bottle, chair, chest of drawers, computer tower, keyboard, monitor, picture
 - **chg_006** The table that was next to the bed seemed to have been removed. Rejected by a visual check of before/after images (confidence 0.90): The white bedside table with the Rubik's cube and water bottle on it is still clearly present beside the bed in the second image, so it was not removed.
 - **chg_007** A new pillow seemed to have appeared next to the keyboard. Rejected: the first recording still shows a surface in 100% of that space, so the object is most likely still there.
 
+## Navigation impact
+
+Navigation is not affected: the route from near the bed to near the chair is 1.7 m both before and after.
+
+- route: near the bed → near the chair; before 1.69 m, after 1.69 m
+- robot radius 0.2 m, height 1.2 m; walkable area before 0.6 m², after 0.6 m²
+- blocking changes: none
+
+![navigation before/after](nav_diff.png)
+
 ## Run information
 
 - change list: `changes/changes_verified.json`

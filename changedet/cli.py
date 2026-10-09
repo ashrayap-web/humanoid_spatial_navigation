@@ -49,6 +49,7 @@ STAGE_ENTRIES = {
     "c6": ("changedet.stages.c6_visibility", "assess_visibility"),
     "c7": ("changedet.stages.c7_verify", "verify_changes"),
     "c8": ("changedet.stages.c8_describe", "describe"),
+    "c9": ("changedet.stages.c9_navigation", "navigation_impact"),
     "c10": ("changedet.stages.c10_visualize", "visualize"),
     "c11": ("changedet.stages.c11_evaluate", "evaluate"),
 }

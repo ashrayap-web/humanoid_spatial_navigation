@@ -22,7 +22,7 @@ import cv2
 import numpy as np
 
 from changedet.core import geometry as geo
-from changedet.core.cache import exists, load_ply, run_dir, run_path
+from changedet.core.cache import exists, load_json, load_ply, run_dir, run_path
 from changedet.core.config import load_run_config
 from changedet.core.logging import get_logger
 from changedet.core.types import Change, ChangeType, Confidence, Object3D
@@ -115,6 +115,7 @@ def write_rrd(run: str, changes, summary, objects: dict[str, Object3D], recon, c
     from changedet.core.cache import load_ply
 
     shown, unchanged, rejected = _split(changes)
+    nav = load_json(run_path(run, "nav/paths.json")) if exists(run, "nav/paths.json") else None
     blueprint = rrb.Blueprint(
         rrb.Horizontal(
             rrb.Spatial3DView(origin="world", name="Changes in 3D"),
@@ -125,9 +126,14 @@ def write_rrd(run: str, changes, summary, objects: dict[str, Object3D], recon, c
                         rrb.Spatial2DView(origin=f"evidence/{c.id}", name=f"{c.id}: {c.label}")
                         for c in shown
                     ],
+                    *(
+                        [rrb.Spatial2DView(origin="navigation_map", name="Navigation")]
+                        if nav
+                        else []
+                    ),
                     name="Evidence",
                 )
-                if shown
+                if shown or nav
                 else rrb.TextDocumentView(origin="report"),
                 row_shares=[1, 1],
             ),
@@ -255,7 +261,26 @@ def write_rrd(run: str, changes, summary, objects: dict[str, Object3D], recon, c
                     [_subsample(points_of[c.object_a], 1 - t), _subsample(points_of[c.object_b], t)]
                 )
             rec.log(entity, rr.Points3D(pts, colors=colour, radii=cfg.point_size))
-    # TODO(C9): navigation grid and paths.
+
+    # --- navigation (C9): routes on the floor and the before/after map
+    if nav:
+        for key, colour in (("before", cfg.colors.session_a), ("after", cfg.colors.session_b)):
+            route = nav[f"path_{key}"]
+            if route:
+                pts = [[x, y, 0.02] for x, y in route]
+                rec.log(
+                    f"world/navigation/route_{key}",
+                    rr.LineStrips3D(
+                        [pts], colors=colour, radii=0.015, labels=[f"robot route {key}"]
+                    ),
+                    static=True,
+                )
+        if exists(run, "nav/nav_diff.png"):
+            rec.log(
+                "navigation_map",
+                rr.EncodedImage(path=run_path(run, "nav/nav_diff.png")),
+                static=True,
+            )
     return str(path)
 
 

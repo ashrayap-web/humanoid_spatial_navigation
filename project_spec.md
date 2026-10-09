@@ -43,8 +43,8 @@ Only build that component. Do not implement future components early.
 | C6  | Visibility reasoning                    | done        | Core      |
 | C7  | VLM change verification                 | done        | Core      |
 | C8  | Semantic description & report           | done (template + LLM) | MVP (basic) / Core (full) |
-| C9  | Navigation impact analysis              | not started | Stretch   |
-| C10 | Interactive visualization               | done (nav overlay waits for C9) | MVP (basic) / Core (full) |
+| C9  | Navigation impact analysis              | done        | Stretch   |
+| C10 | Interactive visualization               | done        | MVP (basic) / Core (full) |
 | C11 | Evaluation against ground truth         | done        | Core      |
 | C12 | End-to-end CLI, packaging, README       | done (sample-data link TBD) | MVP       |
 
@@ -1024,6 +1024,27 @@ bed, which is an obstacle in both sessions, so the free space is unchanged). On 
 recorded), the added floor box visibly changes the path. The synthetic test is the primary proof
 until then.
 
+**As built (2026-10-09):** ⚠️ deviation from method step 1: instead of one grid per session from
+its own cloud, **one static grid** is shared — free floor = floor (|z| < `nav.floor_tol`) seen in
+either cloud + cells within `walked_radius` of either camera path; static obstacles = points in
+(`min_z`, `robot_height`) of either cloud with ≥ `min_points` per cell, **minus points within
+`change_clearance` of a changed object**; "before" adds the changed objects' A footprints
+(removed/moved-from/replaced), "after" their B footprints. Reason: per-session grids differ by
+coverage (on `main` the walkable area connected to the camera path was 0.57 vs 0.43 m²), so route
+differences would mostly be coverage noise. Endpoints: unless `nav.start/goal` are set, the
+farthest pair by walking distance (double Dijkstra sweep) in free-before ∧ free-after, inside the
+components touching the camera path — this also excludes the TV "mirror room" floor behind the
+wall. A* is 8-connected, octile, no corner cutting. Blame: changes whose after-footprint touches the
+inflated before-route (blockers) / before-footprint touches the after-route (openers). Endpoints
+are named by the nearest unchanged object. `robot_radius` default 0.25 → **0.2 m** (the bedroom's
+bed–drawers gap is ~0.6 m; 0.25 m left 0.4 m² walkable). Navigation section is added to
+`report.md` (before "Run information"; C8 also re-adds it if `nav/paths.json` exists) and to
+`report/changes.json` as `stats.navigation`; routes + map are logged to the viewer. New config:
+`min_points`, `floor_tol`, `walked_radius`, `change_clearance`, `same_route_tol`.
+**Result on `main`:** ✅ "Navigation is not affected: the route from near the bed to near the
+chair is 1.7 m both before and after." (walkable 0.6 m² in both). Synthetic corridor test: an added
+box forces a detour and is named as the blocker; no change → no impact.
+
 ---
 
 ### C10 — Interactive visualization
@@ -1248,6 +1269,9 @@ Append one entry per finished component: date, component, decision, reason.
 | 2026-10-09 | C8 | Confirmed sentences must end with their key evidence (prompt v2) | v1 dropped the "84% seen empty" evidence, which is what makes a sentence checkable |
 | 2026-10-09 | C10 | `scene` timeline shows the real scans (RGB) on top of the static grey background | Scrubbing 0 ↔ 1 shows the room as it actually looked; the grey static layer keeps context on the `animation` timeline |
 | 2026-10-09 | C10 | Moved objects interpolate about their own centre, not the world origin | A world-origin yaw would swing the object around the room mid-animation |
+| 2026-10-09 | C9 | One shared static grid + changed-object footprints, instead of per-session grids | Per-session grids differ by coverage; only detected changes should be able to change the route |
+| 2026-10-09 | C9 | Endpoints restricted to free space connected to the camera path | Excludes the TV's mirror-image floor behind the wall and other unreachable pockets |
+| 2026-10-09 | C9 | `robot_radius` 0.2 m (spec default 0.25) | With 0.25 m the tight bedroom left ~0.4 m² walkable; 0.2 m is a ~40 cm wide robot |
 
 ---
 
