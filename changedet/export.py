@@ -29,4 +29,8 @@ def export_run(run: str, out: Path) -> Path:
         for crop in crops:
             shutil.copyfile(run_dir(run) / crop, out / "crops" / Path(crop).name)
         report.write_text(re.sub(r"\(\.\./objects/crops/", "(crops/", text))
+    evidence = run_path(run, "viz/c7_evidence")
+    if evidence.exists():  # C7 before/after pairs with the VLM verdict
+        shutil.rmtree(out / "evidence", ignore_errors=True)
+        shutil.copytree(evidence, out / "evidence")
     return out

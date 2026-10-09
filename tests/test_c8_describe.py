@@ -159,3 +159,42 @@ def test_summary_counts() -> None:
         "object. 2 objects were matched as unchanged."
     )
     assert summary([unchanged]).startswith("No change could be confirmed.")
+
+
+def test_vlm_notes() -> None:
+    m = CFG.match
+    vis = {
+        "old_location": {
+            "seen_from": "B",
+            "free_frac": 0.84,
+            "occupied_frac": 0.06,
+            "unknown_frac": 0.10,
+        }
+    }
+    agreed = change(ChangeType.REMOVED, Confidence.CONFIRMED, visibility=vis)
+    agreed.vlm_verdict = {
+        "change_present": True,
+        "confidence": 0.88,
+        "decision": "kept",
+        "short_description": "gone",
+    }
+    assert sentence(agreed, "on the bed", "", m).endswith(
+        "A visual check of before/after images agrees (confidence 0.88)."
+    )
+    doubted = change(ChangeType.REMOVED, Confidence.UNVERIFIED, "jacket", visibility=vis)
+    doubted.vlm_verdict = {
+        "change_present": False,
+        "confidence": 0.75,
+        "decision": "kept",
+        "short_description": "Still on the rail.",
+    }
+    assert "suggests nothing changed (confidence 0.75" in sentence(doubted, "", "", m)
+    rejected = change(ChangeType.REMOVED, Confidence.REJECTED, "table", visibility=vis)
+    rejected.vlm_verdict = {
+        "change_present": False,
+        "confidence": 0.9,
+        "decision": "rejected",
+        "short_description": "Still there.",
+    }
+    text = sentence(rejected, "", "", m)
+    assert "Rejected by a visual check" in text and text.count("visual check") == 1

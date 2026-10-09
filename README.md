@@ -7,8 +7,9 @@ that only *look* different because the camera saw the room from elsewhere or nev
 ![orbit of the reconstructed room with the removed bag highlighted](examples/demo/hero.gif)
 
 > Example (`examples/demo`): **"1 change was confirmed: the bag that was on the bed has been
-> removed."** 3 further candidates are reported as *could not be verified*, 4 detector false
-> alarms are rejected, and 15 objects are matched as unchanged.
+> removed."** 2 further candidates are reported as *could not be verified*, 5 detector false
+> alarms are rejected (4 by visibility reasoning, 1 by the visual double-check), and 15 objects
+> are matched as unchanged.
 
 ---
 
@@ -41,10 +42,14 @@ recompute everything, and `--set section.key=value` to override any setting in
 **Viewing over SSH:** `uv run rerun --web-viewer runs/demo/viz/final.rrd` serves a browser viewer.
 Forward its port, or copy the `.rrd` (2 MB) to your laptop and run `rerun final.rrd`.
 
+**Optional visual double-check (C7):** put `ANTHROPIC_API_KEY=…` in a `.env` file in the repo
+root (git-ignored; loaded automatically), export it, or run `ant auth login` before `all`, or add it later and run `… cli c7 --run demo --force` then
+`… cli all --run demo --from c8`.
+
 **Docker:**
 ```bash
 docker build -t changedet .
-docker run --gpus all -u "$(id -u):$(id -g)" -e HOME=/tmp \
+docker run --gpus all -u "$(id -u):$(id -g)" -e HOME=/tmp --env-file .env \
   -v "$PWD/checkpoints:/app/checkpoints" -v "$PWD/runs:/app/runs" -v /path/to/recordings:/data \
   changedet all --a /data/before --b /data/after --run demo
 ```
@@ -65,18 +70,25 @@ ground truth is a single removed bag):
 | chg_000 | **removed** | bag | ✅ confirmed | on the bed |
 | chg_001 | **removed** | jacket | ❓ unverified | about 0.3 m from the chair |
 | chg_003 | **removed** | monitor | ❓ unverified | on the chest of drawers |
-| chg_006 | **removed** | table | ❓ unverified | next to the bed |
 
 > **chg_000** The bag that was on the bed has been removed. Confirmed: 84% of that space was seen
-> empty in the second recording.
+> empty in the second recording. A visual check of before/after images agrees (confidence 0.88).
 >
-> **chg_006** The table that was next to the bed may have been removed. Could not be verified:
-> 55% of that space was never clearly observed in the second recording.
+> **chg_006** *(appendix, rejected)* The table that was next to the bed seemed to have been removed.
+> Rejected by a visual check of before/after images (confidence 0.90): The white bedside table
+> with the Rubik's cube and water bottle on it is still clearly present beside the bed in the
+> second image, so it was not removed.
+
+![C7 evidence for the bag: before and after](examples/demo/evidence/chg_000.jpg)
 
 ![top-down map with the confirmed change and its before image](examples/demo/hero.png)
 
-Four more candidates (two picture frames, a "pillow", one jacket) are listed in the report's
-appendix as rejected. The other recording still shows a surface where they are.
+Five candidates are listed in the report's appendix as rejected. For two picture frames, a
+"pillow" and one jacket, the other recording still shows a surface where they are. The bedside
+table was rejected by the visual check. The two that remain unverified are the clothes rail,
+which the visual check also thinks is unchanged but only at 0.75 confidence (it needs 0.8 to
+reject), and a fragment of the TV's reflection that no camera of the second recording saw
+usably.
 
 ---
 
@@ -94,6 +106,8 @@ appendix as rejected. The other recording still shows a surface where they are.
                 C5 match objects A ↔ B              Hungarian on appearance + geometry → moved / removed / added / replaced
                         │
                 C6 visibility check                 did the *other* recording look at that space? → confirmed / unverified / rejected
+                        │
+                C7 visual double-check (optional)   Claude looks at before/after images and may reject a candidate
                         │
                 C8 report  ·  C10 3D viewer
 ```
@@ -132,6 +146,14 @@ the *other* recording and compared with that camera's depth:
 A removal is **confirmed** only if the after-recording looked at the space and saw it empty. It
 is **rejected** if it saw something there, and **unverified** if it never looked.
 
+**C7 — Visual double-check (needs an Anthropic API key).** For every open candidate, a
+before/after image pair is built. For a removal, that's the object's best view in the first
+recording next to the same spot as seen by a camera of the second recording. Claude (Opus 5.5,
+structured JSON output) answers whether the claimed change really happened. A confident "no"
+rejects the candidate; it can never add or confirm a change. Answers are cached, and the image
+pairs are saved in `viz/c7_evidence/` either way. Without credentials the stage logs a warning and
+passes the changes through unchanged.
+
 **C8 — Report.** One sentence per change, from geometry. Locations come from unchanged landmark
 objects ("on the bed", "next to the desk"). Wording follows the confidence ("has been removed" /
 "may have been removed" / "seemed to have been removed"), and each sentence quotes its evidence.
@@ -162,9 +184,9 @@ confirmed change.
   - a glossy TV makes the LiDAR record a full mirror image of the room behind the wall;
   - a photo of people produced "jacket" detections;
   - one recording fused two bottles that the other kept separate.
-- **VLM as verifier, not detector** (planned, C7): a vision-language model will only be asked to
-  double-check geometric candidates with before/after crops. It will not search for changes
-  itself, so it cannot hallucinate new ones.
+- **VLM as verifier, not detector** (C7): a vision-language model is only asked to double-check
+  geometric candidates with before/after crops, and may only *reject*. It never searches for
+  changes itself, so it cannot hallucinate new ones.
 
 ---
 
@@ -175,7 +197,7 @@ with one true change; this is a sanity check, not a benchmark.
 
 | pair | true changes | confirmed | correct confirmed | unverified | rejected false alarms |
 |---|---|---|---|---|---|
-| `main` (vid1 → vid2) | 1 (bag removed) | 1 | 1 (the bag) | 3 (all spurious) | 4 |
+| `main` (vid1 → vid2) | 1 (bag removed) | 1 | 1 (the bag) | 2 (both spurious) | 5 |
 
 All 13 objects matched one-to-one across recordings are matched correctly, and none is falsely
 reported as moved. The synthetic tests (`uv run pytest`, 93 tests) cover every change type,
@@ -203,8 +225,8 @@ including rotation in place, identical objects swapping places, and replacements
 
 ## 7. With more time
 
-- C7: VLM verification of candidates with before/after crops; this should clear most *unverified*
-  noise.
+- Calibrate the C7 rejection threshold on more pairs. On the example the clothes rail is
+  correctly judged unchanged, but at 0.75 confidence, just under the 0.8 needed to reject.
 - C9: navigation impact (occupancy grid diff + path re-planning).
 - C11: evaluation over a no-change control and a "hard" pair (a change hidden behind furniture).
 - C8 full: LLM-written sentences grounded in the same spatial facts.

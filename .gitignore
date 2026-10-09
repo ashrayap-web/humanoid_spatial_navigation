@@ -11,3 +11,6 @@ __pycache__/
 # Raw recordings (hundreds of MB) — shared via download link, not git
 vid*/
 data/recordings/
+
+# Secrets
+.env

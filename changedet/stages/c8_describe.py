@@ -83,7 +83,13 @@ def _recording(session: str) -> str:
 
 
 def evidence(change: Change) -> str:
-    """The visibility evidence behind the confidence, in words."""
+    """The visibility (and VLM) evidence behind the confidence, in words."""
+    vlm = change.vlm_verdict or {}
+    if change.confidence is Confidence.REJECTED and vlm.get("decision") == "rejected":
+        return (
+            f"Rejected by a visual check of before/after images "
+            f"(confidence {vlm['confidence']:.2f}): {vlm['short_description']}"
+        )
     if not change.visibility:
         return ""
     name, vis = next(iter(change.visibility.items()))
@@ -101,6 +107,19 @@ def evidence(change: Change) -> str:
     return (
         f"Rejected: the {rec} recording still shows a surface in {vis['occupied_frac']:.0%} "
         f"of that space, so the object is most likely still there."
+    )
+
+
+def vlm_note(change: Change) -> str:
+    """The visual check's opinion when it did not decide the outcome (agreement or doubt)."""
+    vlm = change.vlm_verdict or {}
+    if not vlm or vlm.get("decision") == "rejected":
+        return ""  # a VLM rejection is already the evidence sentence
+    if vlm["change_present"]:
+        return f"A visual check of before/after images agrees (confidence {vlm['confidence']:.2f})."
+    return (
+        f"A visual check suggests nothing changed (confidence {vlm['confidence']:.2f}, below "
+        f"the threshold to reject): {vlm['short_description']}"
     )
 
 
@@ -152,7 +171,7 @@ def sentence(change: Change, where_a: str, where_b: str, cfg_match) -> str:
             text += "."
     else:
         text = f"The {change.label}{a} is unchanged."
-    return f"{text} {evidence(change)}".strip()
+    return f"{text} {evidence(change)} {vlm_note(change)}".strip()
 
 
 def summary(changes: list[Change]) -> str:
@@ -303,6 +322,15 @@ def describe(run: str, force: bool = False) -> ChangeReport:
     changes, source = latest_changes(run)
     if source != CHANGE_SOURCES[0]:
         warnings.append(f"used {source} (later stages not run)")
+    unchecked = [
+        c.id
+        for c in changes
+        if c.type is not ChangeType.UNCHANGED
+        and c.confidence is not Confidence.REJECTED
+        and c.vlm_verdict is None
+    ]
+    if source == CHANGE_SOURCES[0] and unchecked:
+        warnings.append(f"no VLM verdict for {', '.join(unchecked)} (no credentials or no view)")
     objects_by_session = load_objects(run)
     objects = {o.id: o for s in ("A", "B") for o in objects_by_session[s]}
     unchanged_ids = {

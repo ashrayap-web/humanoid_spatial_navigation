@@ -52,8 +52,16 @@
           ]
         }
       },
-      "vlm_verdict": null,
-      "description": "The bag that was on the bed has been removed. Confirmed: 84% of that space was seen empty in the second recording.",
+      "vlm_verdict": {
+        "same_object": null,
+        "change_present": true,
+        "label": "black backpack",
+        "short_description": "A black leather backpack lying on the sheet-covered sofa/bed in the first recording is no longer there in the second, where the cover is empty.",
+        "confidence": 0.88,
+        "model": "claude-opus-5-5",
+        "decision": "kept"
+      },
+      "description": "The bag that was on the bed has been removed. Confirmed: 84% of that space was seen empty in the second recording. A visual check of before/after images agrees (confidence 0.88).",
       "match_margin": null
     },
     {
@@ -95,8 +103,17 @@
           ]
         }
       },
-      "vlm_verdict": null,
-      "description": "The jacket that was about 0.3 m from the chair may have been removed. Could not be verified: 42% of that space was never clearly observed in the second recording.",
+      "vlm_verdict": {
+        "same_object": null,
+        "change_present": false,
+        "label": "black jacket",
+        "short_description": "The dark jackets on the clothes rack and draped over the desk chair appear in both recordings, so the jacket was not removed.",
+        "confidence": 0.75,
+        "model": "claude-opus-5-5",
+        "refined_label": "black jacket",
+        "decision": "kept"
+      },
+      "description": "The jacket that was about 0.3 m from the chair may have been removed. Could not be verified: 42% of that space was never clearly observed in the second recording. A visual check suggests nothing changed (confidence 0.75, below the threshold to reject): The dark jackets on the clothes rack and draped over the desk chair appear in both recordings, so the jacket was not removed.",
       "match_margin": null
     },
     {
@@ -265,7 +282,7 @@
       "rotation_deg": null,
       "T_a_to_b": null,
       "match_cost": null,
-      "confidence": "unverified",
+      "confidence": "rejected",
       "visibility": {
         "old_location": {
           "seen_from": "B",
@@ -285,8 +302,17 @@
           "occupied_cameras": []
         }
       },
-      "vlm_verdict": null,
-      "description": "The table that was next to the bed may have been removed. Could not be verified: 55% of that space was never clearly observed in the second recording.",
+      "vlm_verdict": {
+        "same_object": null,
+        "change_present": false,
+        "label": "white bedside table",
+        "short_description": "The white bedside table with the Rubik's cube and water bottle on it is still clearly present beside the bed in the second image, so it was not removed.",
+        "confidence": 0.9,
+        "model": "claude-opus-5-5",
+        "refined_label": "white bedside table",
+        "decision": "rejected"
+      },
+      "description": "The table that was next to the bed seemed to have been removed. Rejected by a visual check of before/after images (confidence 0.90): The white bedside table with the Rubik's cube and water bottle on it is still clearly present beside the bed in the second image, so it was not removed.",
       "match_margin": null
     },
     {
@@ -1101,14 +1127,14 @@
       "match_margin": 0.20656983718481348
     }
   ],
-  "summary": "1 change was confirmed: the bag that was on the bed has been removed. 3 further candidates could not be verified because the area was barely observed in one of the recordings. 4 false alarms were rejected because the other recording still shows the object. 15 objects were matched as unchanged.",
+  "summary": "1 change was confirmed: the bag that was on the bed has been removed. 2 further candidates could not be verified because the area was barely observed in one of the recordings. 5 false alarms were rejected because the other recording still shows the object. 15 objects were matched as unchanged.",
   "stats": {
-    "source": "changes/changes_vis.json",
+    "source": "changes/changes_verified.json",
     "counts": {
       "added/rejected": 1,
       "removed/confirmed": 1,
-      "removed/unverified": 3,
-      "removed/rejected": 3,
+      "removed/unverified": 2,
+      "removed/rejected": 4,
       "unchanged/confirmed": 15
     },
     "n_objects": {
@@ -1117,7 +1143,7 @@
     },
     "alignment_rmse": 0.02249750683489552,
     "warnings": [
-      "used changes/changes_vis.json (later stages not run)"
+      "no VLM verdict for chg_003 (no credentials or no view)"
     ]
   }
 }

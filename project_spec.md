@@ -41,7 +41,7 @@ Only build that component. Do not implement future components early.
 | C4  | 3D lifting & object fusion              | done        | MVP       |
 | C5  | Cross-session matching & change classes | done (⚠️ see result) | MVP |
 | C6  | Visibility reasoning                    | done        | Core      |
-| C7  | VLM change verification                 | not started | Core      |
+| C7  | VLM change verification                 | done        | Core      |
 | C8  | Semantic description & report           | basic done (template); full (LLM) not started | MVP (basic) / Core (full) |
 | C9  | Navigation impact analysis              | not started | Stretch   |
 | C10 | Interactive visualization               | basic done (+ hero.png/gif); full not started | MVP (basic) / Core (full) |
@@ -897,6 +897,26 @@ REJECTED logic.
 **Acceptance criteria:** the bag removal on `main` survives; any spurious C5 candidates on `main`
 (and on `nochange`, once recorded) are rejected.
 
+**As built (2026-10-09):** `changedet/llm.py` — `ask_json(cfg, prompt, schema, images, cache_dir)`,
+Anthropic provider via the official SDK (`anthropic` 1.13): `client.beta.messages.create` with
+`claude-opus-5-5`, effort `high`, structured output (`output_config.format` json_schema), and the
+server-side refusal fallback (`fallbacks="default"`, beta `server-side-fallback-2026-07-01`). Responses
+cached in `changes/vlm_cache/<sha256>.json` (key: provider, model, effort, prompt_version, prompt,
+schema, image bytes). Missing credentials → `LLMUnavailable` → warning + pass-through. Schema uses
+`same_object: "yes"|"no"|"not_applicable"` (mapped to bool/None) to stay within plain JSON types;
+`refined_label` is stored inside `vlm_verdict` (no new Change field). Already-REJECTED and
+UNCHANGED changes are not sent. The "after"/"before" view of a place is cropped from the C6
+`free_cameras`/`occupied_cameras` frame (else the camera seeing most of the object), padded by
+`vlm.crop_pad`. C8 now says "Rejected by a visual check …" for VLM rejections and warns when open
+candidates have no verdict. Config adds `effort`, `max_tokens`, `max_side`, `crop_pad`.
+**Result on `main` (2026-10-09, Claude Opus 5.5, 3 calls, ~12 s):** ⚠️ partly met. ✅ bag kept (change
+present, 0.88: "… no longer there in the second, where the cover is empty"). ✅ bedside "table"
+REJECTED (0.90: "… still clearly present beside the bed"). ❌ clothes-rail "jacket": the VLM is right
+(change_present false) but at 0.75 < `reject_conf` 0.8, so it stays UNVERIFIED — threshold not tuned on
+one example. TV-reflection "monitor": no usable view, not sent. Final: 1 confirmed (bag), 2
+unverified, 5 rejected. C8 now also reports the VLM's agreement/doubt when it did not decide.
+API key read from a git-ignored `.env` (python-dotenv in `cli.main`; Docker: `--env-file .env`).
+
 **Out of scope:** writing the final report (C8).
 
 ---
@@ -1165,6 +1185,9 @@ Append one entry per finished component: date, component, decision, reason.
 | 2026-10-09 | C10 | Rejected candidates hidden in the viewer; unverified drawn grey with "(unverified)" | 10-second readability; the report keeps the full list |
 | 2026-10-09 | C10 | hero.gif rendered with matplotlib (grey background, z < 1.6 m, elevated orbit) | No display/offscreen GL needed; the first full-colour version hid the bag |
 | 2026-10-09 | C12 | `all` skips unimplemented stages instead of failing; `export` subcommand for committed examples | MVP must run end-to-end while C7/C9/C11 are pending |
+| 2026-10-09 | C7 | Anthropic SDK with structured outputs + server-side refusal fallback; tolerant JSON parser kept | Structured output guarantees JSON; the parser covers cached/raw text and other providers; fallback re-runs safety declines instead of failing the stage |
+| 2026-10-09 | C7 | The VLM may only reject (confident `change_present: false`), never confirm or add | Keeps geometry in charge ("VLM as verifier, not detector"); an UNVERIFIED change stays UNVERIFIED even if the VLM thinks it is real |
+| 2026-10-09 | C7 | Evidence images written even without credentials | Lets a human (or the README) inspect the before/after pairs |
 
 ---
 

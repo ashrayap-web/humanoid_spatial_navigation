@@ -104,13 +104,17 @@ visibility:        # C6
   max_cameras: 10           # supporting cameras stored per check (C7 uses them for evidence)
   unreliable_labels: [tv, monitor]  # depth under these C3 masks is ignored (glossy: mirror image)
 
-vlm:               # C7
+vlm:               # C7 — needs credentials (ANTHROPIC_API_KEY or `ant auth login`); else skipped
   enabled: true
   provider: anthropic
   model: claude-opus-5-5
-  reject_conf: 0.8
-  max_calls: 50
-  prompt_version: 1
+  effort: high              # thinking is always on for this model; effort sets its depth
+  max_tokens: 16000         # includes thinking
+  reject_conf: 0.8          # "change not present" with at least this confidence -> REJECTED
+  max_calls: 50             # per run (cached answers are free)
+  prompt_version: 1         # bump to invalidate cached answers after editing the prompt
+  max_side: 768             # px, evidence images sent to the model
+  crop_pad: 0.3             # padding around the projected object when cropping a frame
 
 report:            # C8
   mode: template            # template | llm (llm: TODO, C8 full)

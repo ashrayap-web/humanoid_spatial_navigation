@@ -47,6 +47,7 @@ STAGE_ENTRIES = {
     "c4": ("changedet.stages.c4_fuse", "fuse_objects"),
     "c5": ("changedet.stages.c5_match", "match_and_classify"),
     "c6": ("changedet.stages.c6_visibility", "assess_visibility"),
+    "c7": ("changedet.stages.c7_verify", "verify_changes"),
     "c8": ("changedet.stages.c8_describe", "describe"),
     "c10": ("changedet.stages.c10_visualize", "visualize"),
 }
@@ -213,6 +214,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from dotenv import load_dotenv
+
+    load_dotenv()  # e.g. ANTHROPIC_API_KEY from ./.env; never overrides the real environment
     args = build_parser().parse_args(argv)
     setup_logging(args.log_level)
     try:

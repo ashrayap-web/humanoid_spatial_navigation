@@ -1,11 +1,12 @@
 # What changed in the room? — GPU image.
 #
 #   docker build -t changedet .
-#   docker run --gpus all -u "$(id -u):$(id -g)" -e HOME=/tmp \
+#   docker run --gpus all -u "$(id -u):$(id -g)" -e HOME=/tmp --env-file .env \
 #     -v "$PWD/checkpoints:/app/checkpoints" -v "$PWD/runs:/app/runs" -v /path/to/recordings:/data \
 #     changedet all --a /data/vid1 --b /data/vid2 --run demo
 #
 # Model checkpoints are downloaded on first use into the mounted checkpoints/ folder.
+# --env-file .env passes ANTHROPIC_API_KEY for the optional C7 visual check (omit to skip it).
 # PyTorch wheels bundle their own CUDA libraries; the host needs an NVIDIA driver >= 580.
 FROM nvidia/cuda:12.8.1-runtime-ubuntu24.04
 

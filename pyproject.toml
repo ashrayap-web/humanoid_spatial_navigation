@@ -17,6 +17,8 @@ dependencies = [
     "torch>=2.5",
     "torchvision>=0.20",
     "transformers>=4.56",
+    "anthropic>=1.0",
+    "python-dotenv>=1.0",
 ]
 
 [project.scripts]
