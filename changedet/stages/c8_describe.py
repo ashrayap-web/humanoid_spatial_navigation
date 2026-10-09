@@ -1,9 +1,11 @@
-"""C8 — Semantic description & report (template mode).
+"""C8 — Semantic description & report.
 
-Every change gets one sentence built from its geometry: what it is, where it is (relative to an
-unchanged landmark object: "on the bed", "next to the desk"), how far it moved, and how sure we
-are (the C6 visibility evidence). The report lists confirmed and unverified changes; rejected
-candidates go to an appendix.
+Template mode: every change gets one sentence built from its geometry — what it is, where it is
+(relative to an unchanged landmark object: "on the bed", "next to the desk"), how far it moved,
+and how sure we are (the C6/C7 evidence). LLM mode (``c8_llm``) additionally computes a spatial
+fact list per change and has an LLM write the sentences and summary from those facts only;
+anything that fails the grounding check keeps its template. The report lists confirmed and
+unverified changes; rejected candidates go to an appendix.
 """
 
 from __future__ import annotations
@@ -235,7 +237,11 @@ def _row(c: Change, where_text: str) -> str:
 
 
 def write_markdown(
-    run: str, report: ChangeReport, objects: dict[str, Object3D], where_of: dict[str, str]
+    run: str,
+    report: ChangeReport,
+    objects: dict[str, Object3D],
+    where_of: dict[str, str],
+    facts_of: dict[str, str] | None = None,
 ) -> str:
     def crop(obj_id: str | None) -> str:
         if not obj_id:
@@ -270,6 +276,15 @@ def write_markdown(
                 " ".join(x for x in (crop(c.object_a), crop(c.object_b)) if x),
                 "",
             ]
+            if facts_of and c.id in facts_of:
+                lines += [
+                    "<details><summary>Spatial facts the sentence is based on</summary>",
+                    "",
+                    facts_of[c.id],
+                    "",
+                    "</details>",
+                    "",
+                ]
     else:
         lines += ["No changes.", ""]
     lines += [
@@ -292,6 +307,7 @@ def write_markdown(
         f"- change list: `{st['source']}`",
         f"- objects: {st['n_objects']['A']} before, {st['n_objects']['B']} after",
         f"- before/after alignment RMSE: {st['alignment_rmse'] * 100:.1f} cm",
+        f"- report sentences: {st.get('report_mode', 'template')}",
         f"- warnings: {'; '.join(st['warnings']) or 'none'}",
         "",
     ]
@@ -299,6 +315,61 @@ def write_markdown(
     run_path(run, REPORT_MD).parent.mkdir(parents=True, exist_ok=True)
     run_path(run, REPORT_MD).write_text(text)
     return text
+
+
+def _llm_sentences(run, changes, objects, landmarks, recon, full, warnings):
+    """LLM mode: facts for every open change, LLM sentences where they pass the grounding check.
+
+    Returns (summary or None, {change id: facts text}, mode string); appends to ``warnings``.
+    """
+    from scipy.spatial import cKDTree
+
+    from changedet import llm
+    from changedet.core.cache import load_ply
+    from changedet.stages import c8_llm
+
+    cfg = full.report
+    main = [
+        c
+        for c in changes
+        if c.type is not ChangeType.UNCHANGED and c.confidence is not Confidence.REJECTED
+    ]
+    if not main:
+        return None, {}, "template"
+    background, _ = load_ply(run_path(run, recon.background_cloud_path))
+    z_lo, z_hi = cfg.wall_z_range
+    walls = background[(background[:, 2] > z_lo) & (background[:, 2] < z_hi), :2]
+    wall_tree = cKDTree(walls) if len(walls) else None
+    viewpoint = np.mean([cam.T_world_cam[:3, 3] for cam in recon.cameras["A"]], axis=0)
+    location = {}
+    for c in main:
+        for oid in (c.object_a, c.object_b):
+            if oid and oid not in location:
+                o = objects[oid]
+                points, _ = load_ply(run_path(run, o.points_path))
+                location[oid] = c8_llm.location_facts(
+                    o, landmarks(o.session, oid), viewpoint, wall_tree, points, cfg
+                )
+    facts = {c.id: c8_llm.change_facts(c, location, full.match) for c in main}
+    facts_of = {cid: c8_llm.facts_text(f) for cid, f in facts.items()}
+    if not llm.credentials_available(cfg.llm.provider):
+        warnings.append("report.mode=llm but no LLM credentials; used templates")
+        log.warning(warnings[-1])
+        return None, facts_of, "template (no credentials)"
+    try:
+        sentences, the_summary, problems = c8_llm.write_with_llm(
+            main, facts, c8_llm.counts_of(changes), cfg, run_path(run, "report/llm_cache")
+        )
+    except (llm.LLMUnavailable, llm.LLMRefused, ValueError) as e:
+        warnings.append(f"LLM report writing failed ({e}); used templates")
+        log.warning(warnings[-1])
+        return None, facts_of, "template (LLM failed)"
+    warnings += problems
+    for c in main:
+        if c.id in sentences:
+            c.description = sentences[c.id]
+    mode = f"llm ({cfg.llm.model}), {len(sentences)}/{len(main)} sentences"
+    return the_summary, facts_of, mode
 
 
 @cached_stage(REPORT_JSON, load=load_report)
@@ -315,10 +386,6 @@ def describe(run: str, force: bool = False) -> ChangeReport:
     full = load_run_config(run)
     cfg = full.report
     warnings: list[str] = []
-    if cfg.mode != "template":
-        # TODO(C8-full): LLM sentences grounded in spatial facts.
-        warnings.append(f"report.mode={cfg.mode} not implemented yet; used templates")
-        log.warning(warnings[-1])
     changes, source = latest_changes(run)
     if source != CHANGE_SOURCES[0]:
         warnings.append(f"used {source} (later stages not run)")
@@ -347,6 +414,15 @@ def describe(run: str, force: bool = False) -> ChangeReport:
         c.description = sentence(c, wa, wb, full.match)
         where_of[c.id] = wa or wb
 
+    recon = load_reconstruction(run)
+    the_summary, facts_of, mode = None, None, "template"
+    if cfg.mode == "llm":
+        the_summary, facts_of, mode = _llm_sentences(
+            run, changes, objects, landmarks, recon, full, warnings
+        )
+    elif cfg.mode != "template":
+        warnings.append(f"unknown report.mode={cfg.mode}; used templates")
+
     stats = {
         "source": source,
         "counts": {
@@ -356,11 +432,12 @@ def describe(run: str, force: bool = False) -> ChangeReport:
             if any(c.type is t and c.confidence is k for c in changes)
         },
         "n_objects": {s: len(v) for s, v in objects_by_session.items()},
-        "alignment_rmse": load_reconstruction(run).alignment_rmse,
+        "alignment_rmse": recon.alignment_rmse,
+        "report_mode": mode,
         "warnings": warnings,
     }
-    report = ChangeReport(run, changes, summary(changes), stats)
-    write_markdown(run, report, objects, where_of)
+    report = ChangeReport(run, changes, the_summary or summary(changes), stats)
+    write_markdown(run, report, objects, where_of, facts_of)
     log.info("Summary: %s", report.summary)
     for c in changes:
         if c.type is not ChangeType.UNCHANGED:

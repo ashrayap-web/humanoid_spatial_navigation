@@ -61,7 +61,7 @@
         "model": "claude-opus-5-5",
         "decision": "kept"
       },
-      "description": "The bag that was on the bed has been removed. Confirmed: 84% of that space was seen empty in the second recording. A visual check of before/after images agrees (confidence 0.88).",
+      "description": "The black backpack that rested on the bed, to the right of the chest of drawers (as seen from the recording position), has been removed; 84% of its space was seen empty in the second recording.",
       "match_margin": null
     },
     {
@@ -113,7 +113,7 @@
         "refined_label": "black jacket",
         "decision": "kept"
       },
-      "description": "The jacket that was about 0.3 m from the chair may have been removed. Could not be verified: 42% of that space was never clearly observed in the second recording. A visual check suggests nothing changed (confidence 0.75, below the threshold to reject): The dark jackets on the clothes rack and draped over the desk chair appear in both recordings, so the jacket was not removed.",
+      "description": "A black jacket about 0.2 m above the floor, in front of the chair and the bed (as seen from the recording position), may have been removed, but this could not be verified because 42% of its space was never clearly observed in the second recording. A visual check suggests nothing changed, since dark jackets appear in both recordings.",
       "match_margin": null
     },
     {
@@ -190,7 +190,7 @@
         }
       },
       "vlm_verdict": null,
-      "description": "The monitor that was on the chest of drawers may have been removed. Could not be verified: 87% of that space was never clearly observed in the second recording.",
+      "description": "A monitor on the chest of drawers, to the right of another monitor (as seen from the recording position), may have been removed, but this could not be verified because 87% of its space was never clearly observed in the second recording.",
       "match_margin": null
     },
     {
@@ -1127,7 +1127,7 @@
       "match_margin": 0.20656983718481348
     }
   ],
-  "summary": "1 change was confirmed: the bag that was on the bed has been removed. 2 further candidates could not be verified because the area was barely observed in one of the recordings. 5 false alarms were rejected because the other recording still shows the object. 15 objects were matched as unchanged.",
+  "summary": "Comparing the two recordings found one confirmed change: the black backpack on the bed is gone. Two other possible removals, a jacket near the chair and a monitor on the chest of drawers, could not be verified because much of their space was not clearly observed in the second recording. Five false alarms were rejected and 15 objects were unchanged.",
   "stats": {
     "source": "changes/changes_verified.json",
     "counts": {
@@ -1142,6 +1142,7 @@
       "B": 14
     },
     "alignment_rmse": 0.02249750683489552,
+    "report_mode": "llm (claude-opus-5-5), 3/3 sentences",
     "warnings": [
       "no VLM verdict for chg_003 (no credentials or no view)"
     ]

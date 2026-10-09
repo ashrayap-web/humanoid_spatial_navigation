@@ -6,8 +6,8 @@ that only *look* different because the camera saw the room from elsewhere or nev
 
 ![orbit of the reconstructed room with the removed bag highlighted](examples/demo/hero.gif)
 
-> Example (`examples/demo`): **"1 change was confirmed: the bag that was on the bed has been
-> removed."** 2 further candidates are reported as *could not be verified*, 5 detector false
+> Example (`examples/demo`): **"Comparing the two recordings found one confirmed change: the
+> black backpack on the bed is gone."** 2 further candidates are reported as *could not be verified*, 5 detector false
 > alarms are rejected (4 by visibility reasoning, 1 by the visual double-check), and 15 objects
 > are matched as unchanged.
 
@@ -71,8 +71,9 @@ ground truth is a single removed bag):
 | chg_001 | **removed** | jacket | ❓ unverified | about 0.3 m from the chair |
 | chg_003 | **removed** | monitor | ❓ unverified | on the chest of drawers |
 
-> **chg_000** The bag that was on the bed has been removed. Confirmed: 84% of that space was seen
-> empty in the second recording. A visual check of before/after images agrees (confidence 0.88).
+> **chg_000** The black backpack that rested on the bed, to the right of the chest of drawers (as
+> seen from the recording position), has been removed; 84% of its space was seen empty in the
+> second recording.
 >
 > **chg_006** *(appendix, rejected)* The table that was next to the bed seemed to have been removed.
 > Rejected by a visual check of before/after images (confidence 0.90): The white bedside table
@@ -154,9 +155,19 @@ rejects the candidate; it can never add or confirm a change. Answers are cached,
 pairs are saved in `viz/c7_evidence/` either way. Without credentials the stage logs a warning and
 passes the changes through unchanged.
 
-**C8 — Report.** One sentence per change, from geometry. Locations come from unchanged landmark
-objects ("on the bed", "next to the desk"). Wording follows the confidence ("has been removed" /
-"may have been removed" / "seemed to have been removed"), and each sentence quotes its evidence.
+**C8 — Report.** For each change, a list of spatial facts is computed from the 3D map:
+- what the object rested on, and the nearest unchanged landmarks ("on the bed", "next to the
+  desk") with a direction (left / right / in front / behind, as seen from where the recordings
+  were made);
+- the distance to the nearest wall, the object's size, and how far it moved;
+- the visibility and visual-check evidence.
+
+Claude writes one sentence per change and a short summary **using only those facts**. Each
+sentence is checked automatically: every number in it must appear in its facts, and the object
+must be named. A sentence that fails, or every sentence when there are no credentials, falls back
+to a template ("has been removed" / "may have been removed" / "seemed to have been removed", plus
+the evidence). The fact list is shown under each change in `report.md`, so every sentence can be
+checked.
 
 **C10 — Viewer.** A rerun recording that opens with a fixed layout: the 3D scene (changes coloured
 by type, unchanged objects dimmed, both camera paths), the report, and a "before" photo of each
@@ -252,7 +263,8 @@ preference catches 4–5 of them but adds 7–12 false moves, so it stays conser
 - C9: navigation impact (occupancy grid diff + path re-planning).
 - Record a no-change control and a "hard" pair (a change hidden behind furniture) and add their
   ground truth; `eval_all.sh` picks them up automatically.
-- C8 full: LLM-written sentences grounded in the same spatial facts.
+- Directions relative to the room itself ("by the window") rather than to the recording
+  position, once walls and windows are recognised robustly despite TV reflections.
 - Plain video input via MASt3R/VGGT; masking glossy surfaces in the fused clouds as well.
 
 ## 8. Recording tips

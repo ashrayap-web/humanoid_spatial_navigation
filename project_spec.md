@@ -42,7 +42,7 @@ Only build that component. Do not implement future components early.
 | C5  | Cross-session matching & change classes | done (⚠️ see result) | MVP |
 | C6  | Visibility reasoning                    | done        | Core      |
 | C7  | VLM change verification                 | done        | Core      |
-| C8  | Semantic description & report           | basic done (template); full (LLM) not started | MVP (basic) / Core (full) |
+| C8  | Semantic description & report           | done (template + LLM) | MVP (basic) / Core (full) |
 | C9  | Navigation impact analysis              | not started | Stretch   |
 | C10 | Interactive visualization               | basic done (+ hero.png/gif); full not started | MVP (basic) / Core (full) |
 | C11 | Evaluation against ground truth         | done        | Core      |
@@ -968,6 +968,25 @@ second recording."). Config adds `on_tol`, `next_to_dist`, `near_dist`.
 3 unverified listed as "may have been removed … could not be verified", 4 rejected in the
 appendix only.
 
+**Full (LLM) as built (2026-10-09):** `changedet/stages/c8_llm.py`. Facts per open change: what it
+rests on (landmark "on", "the floor", or height), up to `landmark_k` nearest unchanged landmarks
+with relation (on / next to / about d m from) and a direction **relative to the fixed viewpoint =
+mean camera position of A** ("to the left of X, as seen from where the recordings were made" —
+forward = viewpoint→landmark), distance to the nearest wall (background points at
+`report.wall_z_range` 1.6–2.2 m, above most furniture), size, moved distance/turn, and the C6/C7
+evidence text. One `llm.ask_json` call (Claude Opus 5.5, effort medium, structured output
+`{summary, sentences: [{id, sentence}]}`, cached in `report/llm_cache/`). **Grounding check** per
+sentence: every number must appear in that change's facts and the object (or the VLM's name for
+it) must be named; the summary's numbers must appear in the facts or the counts. Failing items and
+the no-credentials case fall back to templates, recorded in `stats.warnings` and
+`stats.report_mode`. REJECTED/UNCHANGED keep templates. report.md shows the fact list under each
+change (`<details>`). Config: `mode` (default now `llm`), `wall_z_range`, `llm.{provider, model,
+effort, max_tokens, prompt_version}`.
+**Result on `main`:** ✅ 3/3 sentences + summary grounded, e.g. "The black backpack that rested on
+the bed, to the right of the chest of drawers (as seen from the recording position), has been
+removed; 84% of its space was seen empty in the second recording." Direction checked against the
+geometry (bed lies right of the drawers from the camera positions). 1 call, ~7 s.
+
 ---
 
 ### C9 — Navigation impact analysis (stretch)
@@ -1211,6 +1230,10 @@ Append one entry per finished component: date, component, decision, reason.
 | 2026-10-09 | C11 | GT positions compared horizontally | GT is marked on a floor plan (z = 0) while predictions are centroids; 3D distance rejected correct tall objects in the synthetic suite |
 | 2026-10-09 | C11 | Synthetic suite scores C5 only, with embeddings matching measured real statistics | Only one real change exists; the suite gives every change type a number, and says clearly what it does not test |
 | 2026-10-09 | C5 | Keep `stay_margin` 0.1 after a sweep on 200 synthetic scenes | 0.1: F1 0.990 (moved 6 FN / 2 FP); 0.05: 0.987 (2 FN / 9 FP); 0.02: 0.982 (1 FN / 14 FP) — false moves cost more than missed in-place rotations |
+| 2026-10-09 | C8 | Directions relative to the mean camera position of A ("as seen from where the recordings were made") | A room-fixed frame needs reliable walls/windows, which the TV mirror image breaks (C4); the viewer frame is unambiguous and matches how the person recorded |
+| 2026-10-09 | C8 | Automatic grounding check (numbers ⊂ facts, object named) with per-sentence template fallback | Makes "only these facts" enforceable instead of a prompt request; any hallucinated distance is caught |
+| 2026-10-09 | C8 | LLM writes only confirmed/unverified sentences + summary; rejected and unchanged keep templates | Fewer tokens; the appendix is mechanical |
+| 2026-10-09 | C8 | Confirmed sentences must end with their key evidence (prompt v2) | v1 dropped the "84% seen empty" evidence, which is what makes a sentence checkable |
 
 ---
 
