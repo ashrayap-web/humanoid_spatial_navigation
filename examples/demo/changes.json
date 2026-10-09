@@ -1,0 +1,1123 @@
+{
+  "run_name": "demo",
+  "changes": [
+    {
+      "id": "chg_000",
+      "type": "removed",
+      "label": "bag",
+      "object_a": "A_011",
+      "object_b": null,
+      "position_a": [
+        0.7676379160338377,
+        0.3191877641657222,
+        0.6599184895400729
+      ],
+      "position_b": null,
+      "translation": null,
+      "rotation_deg": null,
+      "T_a_to_b": null,
+      "match_cost": null,
+      "confidence": "confirmed",
+      "visibility": {
+        "old_location": {
+          "seen_from": "B",
+          "n_points": 2000,
+          "free_frac": 0.837,
+          "occupied_frac": 0.0645,
+          "unknown_frac": 0.0985,
+          "confidence": "confirmed",
+          "free_cameras": [
+            94,
+            89,
+            90,
+            92,
+            91,
+            95,
+            69,
+            88,
+            93,
+            70
+          ],
+          "occupied_cameras": [
+            89,
+            72,
+            91,
+            93,
+            88,
+            21,
+            92,
+            23,
+            90,
+            70
+          ]
+        }
+      },
+      "vlm_verdict": null,
+      "description": "The bag that was on the bed has been removed. Confirmed: 84% of that space was seen empty in the second recording.",
+      "match_margin": null
+    },
+    {
+      "id": "chg_001",
+      "type": "removed",
+      "label": "jacket",
+      "object_a": "A_016",
+      "object_b": null,
+      "position_a": [
+        1.4321342441003213,
+        -1.360286431560727,
+        0.6694029842799659
+      ],
+      "position_b": null,
+      "translation": null,
+      "rotation_deg": null,
+      "T_a_to_b": null,
+      "match_cost": null,
+      "confidence": "unverified",
+      "visibility": {
+        "old_location": {
+          "seen_from": "B",
+          "n_points": 1072,
+          "free_frac": 0.34421641791044777,
+          "occupied_frac": 0.24067164179104478,
+          "unknown_frac": 0.41511194029850745,
+          "confidence": "unverified",
+          "free_cameras": [
+            1,
+            0,
+            2,
+            5,
+            4,
+            6
+          ],
+          "occupied_cameras": [
+            1,
+            0
+          ]
+        }
+      },
+      "vlm_verdict": null,
+      "description": "The jacket that was about 0.3 m from the chair may have been removed. Could not be verified: 42% of that space was never clearly observed in the second recording.",
+      "match_margin": null
+    },
+    {
+      "id": "chg_002",
+      "type": "removed",
+      "label": "jacket",
+      "object_a": "A_020",
+      "object_b": null,
+      "position_a": [
+        1.1331835446009875,
+        -1.557260536478961,
+        0.7547144470121031
+      ],
+      "position_b": null,
+      "translation": null,
+      "rotation_deg": null,
+      "T_a_to_b": null,
+      "match_cost": null,
+      "confidence": "rejected",
+      "visibility": {
+        "old_location": {
+          "seen_from": "B",
+          "n_points": 222,
+          "free_frac": 0.12612612612612611,
+          "occupied_frac": 0.5045045045045045,
+          "unknown_frac": 0.36936936936936937,
+          "confidence": "rejected",
+          "free_cameras": [
+            38,
+            1
+          ],
+          "occupied_cameras": [
+            38,
+            1,
+            37,
+            2,
+            36
+          ]
+        }
+      },
+      "vlm_verdict": null,
+      "description": "The jacket that was next to the chair seemed to have been removed. Rejected: the second recording still shows a surface in 50% of that space, so the object is most likely still there.",
+      "match_margin": null
+    },
+    {
+      "id": "chg_003",
+      "type": "removed",
+      "label": "monitor",
+      "object_a": "A_017",
+      "object_b": null,
+      "position_a": [
+        -0.5748838833329795,
+        0.05534370697087972,
+        1.1349212474380057
+      ],
+      "position_b": null,
+      "translation": null,
+      "rotation_deg": null,
+      "T_a_to_b": null,
+      "match_cost": null,
+      "confidence": "unverified",
+      "visibility": {
+        "old_location": {
+          "seen_from": "B",
+          "n_points": 1703,
+          "free_frac": 0.046975924838520255,
+          "occupied_frac": 0.08162066940692896,
+          "unknown_frac": 0.8714034057545508,
+          "confidence": "unverified",
+          "free_cameras": [],
+          "occupied_cameras": [
+            89
+          ]
+        }
+      },
+      "vlm_verdict": null,
+      "description": "The monitor that was on the chest of drawers may have been removed. Could not be verified: 87% of that space was never clearly observed in the second recording.",
+      "match_margin": null
+    },
+    {
+      "id": "chg_004",
+      "type": "removed",
+      "label": "picture frame",
+      "object_a": "A_018",
+      "object_b": null,
+      "position_a": [
+        1.8326104657684705,
+        1.6614992920038123,
+        1.3762301198762956
+      ],
+      "position_b": null,
+      "translation": null,
+      "rotation_deg": null,
+      "T_a_to_b": null,
+      "match_cost": null,
+      "confidence": "rejected",
+      "visibility": {
+        "old_location": {
+          "seen_from": "B",
+          "n_points": 67,
+          "free_frac": 0.0,
+          "occupied_frac": 1.0,
+          "unknown_frac": 0.0,
+          "confidence": "rejected",
+          "free_cameras": [],
+          "occupied_cameras": [
+            48,
+            49,
+            72
+          ]
+        }
+      },
+      "vlm_verdict": null,
+      "description": "The picture frame that was next to another picture frame seemed to have been removed. Rejected: the second recording still shows a surface in 100% of that space, so the object is most likely still there.",
+      "match_margin": null
+    },
+    {
+      "id": "chg_005",
+      "type": "removed",
+      "label": "picture frame",
+      "object_a": "A_019",
+      "object_b": null,
+      "position_a": [
+        1.960590718826142,
+        1.6957860248393566,
+        1.2171576346232476
+      ],
+      "position_b": null,
+      "translation": null,
+      "rotation_deg": null,
+      "T_a_to_b": null,
+      "match_cost": null,
+      "confidence": "rejected",
+      "visibility": {
+        "old_location": {
+          "seen_from": "B",
+          "n_points": 71,
+          "free_frac": 0.0,
+          "occupied_frac": 1.0,
+          "unknown_frac": 0.0,
+          "confidence": "rejected",
+          "free_cameras": [],
+          "occupied_cameras": [
+            48,
+            49
+          ]
+        }
+      },
+      "vlm_verdict": null,
+      "description": "The picture frame that was next to another picture frame seemed to have been removed. Rejected: the second recording still shows a surface in 100% of that space, so the object is most likely still there.",
+      "match_margin": null
+    },
+    {
+      "id": "chg_006",
+      "type": "removed",
+      "label": "table",
+      "object_a": "A_021",
+      "object_b": null,
+      "position_a": [
+        1.9999965347418838,
+        1.4696115095782747,
+        0.6220921091572751
+      ],
+      "position_b": null,
+      "translation": null,
+      "rotation_deg": null,
+      "T_a_to_b": null,
+      "match_cost": null,
+      "confidence": "unverified",
+      "visibility": {
+        "old_location": {
+          "seen_from": "B",
+          "n_points": 312,
+          "free_frac": 0.4326923076923077,
+          "occupied_frac": 0.019230769230769232,
+          "unknown_frac": 0.5480769230769231,
+          "confidence": "unverified",
+          "free_cameras": [
+            47,
+            50,
+            49,
+            72,
+            48,
+            92
+          ],
+          "occupied_cameras": []
+        }
+      },
+      "vlm_verdict": null,
+      "description": "The table that was next to the bed may have been removed. Could not be verified: 55% of that space was never clearly observed in the second recording.",
+      "match_margin": null
+    },
+    {
+      "id": "chg_007",
+      "type": "added",
+      "label": "pillow",
+      "object_a": null,
+      "object_b": "B_013",
+      "position_a": null,
+      "position_b": [
+        -0.26970747563772696,
+        1.032725298614577,
+        0.9096727577777924
+      ],
+      "translation": null,
+      "rotation_deg": null,
+      "T_a_to_b": null,
+      "match_cost": null,
+      "confidence": "rejected",
+      "visibility": {
+        "new_location": {
+          "seen_from": "A",
+          "n_points": 64,
+          "free_frac": 0.0,
+          "occupied_frac": 1.0,
+          "unknown_frac": 0.0,
+          "confidence": "rejected",
+          "free_cameras": [],
+          "occupied_cameras": [
+            63,
+            55,
+            56,
+            91,
+            92,
+            27,
+            68,
+            57,
+            25,
+            89
+          ]
+        }
+      },
+      "vlm_verdict": null,
+      "description": "A new pillow seemed to have appeared next to the keyboard. Rejected: the first recording still shows a surface in 100% of that space, so the object is most likely still there.",
+      "match_margin": null
+    },
+    {
+      "id": "chg_008",
+      "type": "unchanged",
+      "label": "bed",
+      "object_a": "A_009",
+      "object_b": "B_008",
+      "position_a": [
+        1.324780912684775,
+        0.12141551852373877,
+        0.5343183737604481
+      ],
+      "position_b": [
+        1.3084812720069097,
+        0.09671287074373193,
+        0.5313196833158995
+      ],
+      "translation": [
+        -0.000501688173301984,
+        0.020501494445552076,
+        -0.0009033580336491598
+      ],
+      "rotation_deg": -0.24613081808928428,
+      "T_a_to_b": [
+        [
+          0.9999907730947255,
+          0.0042957799539848985,
+          0.0,
+          -0.001011038895888239
+        ],
+        [
+          -0.00429577995398489,
+          0.9999907730947258,
+          0.0,
+          0.02619358202317338
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          -0.0009033580336491963
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "match_cost": 0.1471664301526645,
+      "confidence": "confirmed",
+      "visibility": null,
+      "vlm_verdict": null,
+      "description": "The bed next to the chest of drawers is unchanged.",
+      "match_margin": 1.6975566820550259
+    },
+    {
+      "id": "chg_009",
+      "type": "unchanged",
+      "label": "bottle",
+      "object_a": "A_004",
+      "object_b": "B_004",
+      "position_a": [
+        0.005394268284554239,
+        -0.7960553547407649,
+        0.945650329881234
+      ],
+      "position_b": [
+        -0.0034662985826553095,
+        -0.7859062331612228,
+        0.9493913025171485
+      ],
+      "translation": [
+        0.0032226587942173193,
+        0.005562768186590961,
+        -0.0011533268650429918
+      ],
+      "rotation_deg": -0.646717339706413,
+      "T_a_to_b": [
+        [
+          0.9999362985762172,
+          0.011287107233241703,
+          0.0,
+          0.01220816456934259
+        ],
+        [
+          -0.011287107233241694,
+          0.999936298576217,
+          0.0,
+          0.00557294401165655
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          -0.0011533268650429519
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "match_cost": 0.0825109549875659,
+      "confidence": "confirmed",
+      "visibility": null,
+      "vlm_verdict": null,
+      "description": "The bottle on the chest of drawers is unchanged.",
+      "match_margin": 0.5288422524589428
+    },
+    {
+      "id": "chg_010",
+      "type": "unchanged",
+      "label": "bottle",
+      "object_a": "A_013",
+      "object_b": "B_010",
+      "position_a": [
+        0.1712791001290323,
+        -2.0051106887609462,
+        0.8062306141874179
+      ],
+      "position_b": [
+        0.14437617918254547,
+        -1.9593610313495762,
+        0.7816527278947241
+      ],
+      "translation": [
+        0.0006182881640102722,
+        -0.011339567262943717,
+        -0.035777886564519745
+      ],
+      "rotation_deg": 17.413407782492754,
+      "T_a_to_b": [
+        [
+          0.9541703238686913,
+          -0.2992640857976726,
+          0.0,
+          -0.5915896633442004
+        ],
+        [
+          0.29926408579767244,
+          0.9541703238686912,
+          0.0,
+          -0.15449082405264655
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          -0.03577788656451973
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "match_cost": 0.22085043031916107,
+      "confidence": "confirmed",
+      "visibility": null,
+      "vlm_verdict": null,
+      "description": "The bottle next to another bottle is unchanged.",
+      "match_margin": 0.007598749701371199
+    },
+    {
+      "id": "chg_011",
+      "type": "unchanged",
+      "label": "bottle",
+      "object_a": "A_012",
+      "object_b": "B_010",
+      "position_a": [
+        0.11221203682183863,
+        -1.910992986641677,
+        0.8009269831642231
+      ],
+      "position_b": [
+        0.14437617918254547,
+        -1.9593610313495762,
+        0.7816527278947241
+      ],
+      "translation": null,
+      "rotation_deg": null,
+      "T_a_to_b": null,
+      "match_cost": null,
+      "confidence": "confirmed",
+      "visibility": null,
+      "vlm_verdict": null,
+      "description": "The bottle next to the monitor is unchanged.",
+      "match_margin": null
+    },
+    {
+      "id": "chg_012",
+      "type": "unchanged",
+      "label": "chair",
+      "object_a": "A_005",
+      "object_b": "B_006",
+      "position_a": [
+        0.6975593394454169,
+        -1.366416024329843,
+        0.564523739009421
+      ],
+      "position_b": [
+        0.7008667015542199,
+        -1.3845386652715033,
+        0.6172050628735075
+      ],
+      "translation": [
+        -0.0018992986382762034,
+        3.284912226431125e-05,
+        0.0013428036549247846
+      ],
+      "rotation_deg": -0.8372831589189218,
+      "T_a_to_b": [
+        [
+          0.9998932269317907,
+          0.01461282778693482,
+          0.0,
+          0.018142383961494594
+        ],
+        [
+          -0.014612827786934792,
+          0.9998932269317911,
+          0.0,
+          0.010080267189380515
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.001342803654924831
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "match_cost": 0.09537456656904077,
+      "confidence": "confirmed",
+      "visibility": null,
+      "vlm_verdict": null,
+      "description": "The chair on the floor next to the chest of drawers is unchanged.",
+      "match_margin": 1.4919792918485528
+    },
+    {
+      "id": "chg_013",
+      "type": "unchanged",
+      "label": "chest of drawers",
+      "object_a": "A_000",
+      "object_b": "B_000",
+      "position_a": [
+        -0.059911659987395414,
+        -0.21293931146023481,
+        0.48853109077303936
+      ],
+      "position_b": [
+        -0.08363542349955995,
+        -0.15181047578494897,
+        0.4850408684622537
+      ],
+      "translation": [
+        0.0006892636070349872,
+        0.0015791556009927543,
+        -0.0003654428064561732
+      ],
+      "rotation_deg": 0.21496932630986976,
+      "T_a_to_b": [
+        [
+          0.9999929615469028,
+          -0.0037519137323200223,
+          0.0,
+          -0.00011008800519223551
+        ],
+        [
+          0.003751913732320022,
+          0.9999929615469029,
+          0.0,
+          0.0018024402174693227
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          -0.0003654428064561998
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "match_cost": 0.04985818910812107,
+      "confidence": "confirmed",
+      "visibility": null,
+      "vlm_verdict": null,
+      "description": "The chest of drawers on the floor next to the monitor is unchanged.",
+      "match_margin": 0.7120607256950338
+    },
+    {
+      "id": "chg_014",
+      "type": "unchanged",
+      "label": "chest of drawers",
+      "object_a": "A_002",
+      "object_b": "B_001",
+      "position_a": [
+        0.2580113785975711,
+        -1.0506663596684491,
+        0.5102691270210918
+      ],
+      "position_b": [
+        0.2569342669006349,
+        -1.0545839842302878,
+        0.5299131143389451
+      ],
+      "translation": [
+        0.0013232938519224247,
+        -0.0004958814269062639,
+        -0.002670013412521155
+      ],
+      "rotation_deg": -0.3807921744422913,
+      "T_a_to_b": [
+        [
+          0.9999779149101529,
+          0.006646028283370675,
+          0.0,
+          0.008311750399142961
+        ],
+        [
+          -0.00664602828337068,
+          0.9999779149101528,
+          0.0,
+          0.0011956654317319146
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          -0.0026700134125211624
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "match_cost": 0.346582251545296,
+      "confidence": "confirmed",
+      "visibility": null,
+      "vlm_verdict": null,
+      "description": "The chest of drawers on the floor next to another chest of drawers is unchanged.",
+      "match_margin": 0.4153366632578589
+    },
+    {
+      "id": "chg_015",
+      "type": "unchanged",
+      "label": "computer tower",
+      "object_a": "A_003",
+      "object_b": "B_003",
+      "position_a": [
+        -0.0061715201160046475,
+        -1.0681799785199222,
+        0.928941014900442
+      ],
+      "position_b": [
+        -0.03937511965866649,
+        -1.0589115106421585,
+        0.9338337840106956
+      ],
+      "translation": [
+        -0.021231336019458626,
+        0.003112024376935363,
+        -0.0032036338586574065
+      ],
+      "rotation_deg": -0.9365991896022194,
+      "T_a_to_b": [
+        [
+          0.9998663950268873,
+          0.016346011621681877,
+          0.0,
+          -0.003771678222303243
+        ],
+        [
+          -0.01634601162168189,
+          0.999866395026887,
+          0.0,
+          0.0028684304800856704
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          -0.0032036338586573752
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "match_cost": 0.029732607224494462,
+      "confidence": "confirmed",
+      "visibility": null,
+      "vlm_verdict": null,
+      "description": "The computer tower on the chest of drawers is unchanged.",
+      "match_margin": 1.3403691676419887
+    },
+    {
+      "id": "chg_016",
+      "type": "unchanged",
+      "label": "keyboard",
+      "object_a": "A_008",
+      "object_b": "B_005",
+      "position_a": [
+        -0.45455041761877013,
+        0.35606839167682486,
+        0.8339109105173523
+      ],
+      "position_b": [
+        -0.6229051253312118,
+        0.43498336618490935,
+        1.0310673036586933
+      ],
+      "translation": [
+        0.0022135321954740994,
+        0.0035776575335676464,
+        -0.002136926331297473
+      ],
+      "rotation_deg": 0.6131300390670162,
+      "T_a_to_b": [
+        [
+          0.9999427433699546,
+          -0.010700933686789624,
+          0.0,
+          0.005997770417671059
+        ],
+        [
+          0.010700933686789626,
+          0.9999427433699546,
+          0.0,
+          0.008462158685981724
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          -0.002136926331297439
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "match_cost": 0.6064068990084339,
+      "confidence": "confirmed",
+      "visibility": null,
+      "vlm_verdict": null,
+      "description": "The keyboard next to the chest of drawers is unchanged.",
+      "match_margin": 0.24601399603403795
+    },
+    {
+      "id": "chg_017",
+      "type": "unchanged",
+      "label": "monitor",
+      "object_a": "A_001",
+      "object_b": "B_002",
+      "position_a": [
+        -0.25473895699980276,
+        -0.4996860163109371,
+        1.0780680064759487
+      ],
+      "position_b": [
+        -0.26867760037626637,
+        -0.45328172027965935,
+        1.091660663420564
+      ],
+      "translation": [
+        0.017903479428613728,
+        0.00026989183328191,
+        -0.01581771281491351
+      ],
+      "rotation_deg": -0.3099130463118911,
+      "T_a_to_b": [
+        [
+          0.9999853713786525,
+          0.005408976677583152,
+          0.0,
+          0.020602542957209622
+        ],
+        [
+          -0.00540897667758315,
+          0.9999853713786525,
+          0.0,
+          -0.0011152949615271714
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          -0.015817712814913596
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "match_cost": 0.0580498583731944,
+      "confidence": "confirmed",
+      "visibility": null,
+      "vlm_verdict": null,
+      "description": "The monitor next to the chest of drawers is unchanged.",
+      "match_margin": 0.6455683705452416
+    },
+    {
+      "id": "chg_018",
+      "type": "unchanged",
+      "label": "monitor",
+      "object_a": "A_007",
+      "object_b": "B_007",
+      "position_a": [
+        0.08639544162038215,
+        -1.4862244283948103,
+        0.9438622252140936
+      ],
+      "position_b": [
+        0.08448892699306404,
+        -1.4825726821965828,
+        0.9355453921605273
+      ],
+      "translation": [
+        -0.02189900367489217,
+        0.0005360574951494002,
+        -0.0023516969049947045
+      ],
+      "rotation_deg": -0.6667087281803106,
+      "T_a_to_b": [
+        [
+          0.9999322994619054,
+          0.011635999863601636,
+          0.0,
+          -0.0045994474109221275
+        ],
+        [
+          -0.011635999863601624,
+          0.9999322994619053,
+          0.0,
+          0.0014407366485283766
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          -0.002351696904994684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "match_cost": 0.3747576954347251,
+      "confidence": "confirmed",
+      "visibility": null,
+      "vlm_verdict": null,
+      "description": "The monitor next to the chest of drawers is unchanged.",
+      "match_margin": 0.9643864501818644
+    },
+    {
+      "id": "chg_019",
+      "type": "unchanged",
+      "label": "monitor",
+      "object_a": "A_010",
+      "object_b": "B_005",
+      "position_a": [
+        -0.564187855039938,
+        0.43446101746674076,
+        1.0763123847357017
+      ],
+      "position_b": [
+        -0.6229051253312118,
+        0.43498336618490935,
+        1.0310673036586933
+      ],
+      "translation": null,
+      "rotation_deg": null,
+      "T_a_to_b": null,
+      "match_cost": null,
+      "confidence": "confirmed",
+      "visibility": null,
+      "vlm_verdict": null,
+      "description": "The monitor next to the chest of drawers is unchanged.",
+      "match_margin": null
+    },
+    {
+      "id": "chg_020",
+      "type": "unchanged",
+      "label": "picture frame",
+      "object_a": "A_006",
+      "object_b": "B_009",
+      "position_a": [
+        -0.005750799792014622,
+        -1.7386730043973793,
+        1.7182504700774053
+      ],
+      "position_b": [
+        0.0072182990999067635,
+        -1.7322536223282226,
+        1.5730873508891146
+      ],
+      "translation": [
+        0.01314679008876633,
+        0.0020854575699198463,
+        0.016107609869867145
+      ],
+      "rotation_deg": 0.8236331096336755,
+      "T_a_to_b": [
+        [
+          0.9998966798913385,
+          -0.014374614508842103,
+          0.0,
+          -0.011846558279635728
+        ],
+        [
+          0.0143746145088421,
+          0.9998966798913388,
+          0.0,
+          0.001988483216307117
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.016107609869867215
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "match_cost": 0.8572625885474632,
+      "confidence": "confirmed",
+      "visibility": null,
+      "vlm_verdict": null,
+      "description": "The picture frame about 0.3 m from the monitor is unchanged.",
+      "match_margin": 0.705341136503087
+    },
+    {
+      "id": "chg_021",
+      "type": "unchanged",
+      "label": "picture frame",
+      "object_a": "A_014",
+      "object_b": "B_011",
+      "position_a": [
+        1.6838790781112272,
+        1.5877961538716547,
+        1.2292138623577267
+      ],
+      "position_b": [
+        1.6957629286434854,
+        1.5868624857084028,
+        1.2267735520455878
+      ],
+      "translation": [
+        0.016622645066272312,
+        -0.002428255265371826,
+        0.003599913970294466
+      ],
+      "rotation_deg": 2.219041411596919,
+      "T_a_to_b": [
+        [
+          0.9992501036031083,
+          -0.038719897329180464,
+          0.0,
+          0.07936468397732738
+        ],
+        [
+          0.0387198973291806,
+          0.999250103603106,
+          0.0,
+          -0.06643719766980329
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.003599913970294369
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "match_cost": 0.2353769915095473,
+      "confidence": "confirmed",
+      "visibility": null,
+      "vlm_verdict": null,
+      "description": "The picture frame next to another picture frame is unchanged.",
+      "match_margin": 0.2205828220111977
+    },
+    {
+      "id": "chg_022",
+      "type": "unchanged",
+      "label": "picture frame",
+      "object_a": "A_015",
+      "object_b": "B_012",
+      "position_a": [
+        1.6813053100638629,
+        1.598849427795572,
+        1.381946981008335
+      ],
+      "position_b": [
+        1.6907679498930386,
+        1.5855227549580728,
+        1.3780175010434494
+      ],
+      "translation": [
+        0.01405081473812908,
+        -0.017622592518710123,
+        -0.0002979245163277078
+      ],
+      "rotation_deg": -2.431546857262191,
+      "T_a_to_b": [
+        [
+          0.9990996220651723,
+          0.042425760915145785,
+          0.0,
+          -0.052267778621953406
+        ],
+        [
+          -0.04242576091514579,
+          0.9990996220651722,
+          0.0,
+          0.05514763333732355
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          -0.0002979245163277315
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "match_cost": 0.25049645159244593,
+      "confidence": "confirmed",
+      "visibility": null,
+      "vlm_verdict": null,
+      "description": "The picture frame on another picture frame is unchanged.",
+      "match_margin": 0.20656983718481348
+    }
+  ],
+  "summary": "1 change was confirmed: the bag that was on the bed has been removed. 3 further candidates could not be verified because the area was barely observed in one of the recordings. 4 false alarms were rejected because the other recording still shows the object. 15 objects were matched as unchanged.",
+  "stats": {
+    "source": "changes/changes_vis.json",
+    "counts": {
+      "added/rejected": 1,
+      "removed/confirmed": 1,
+      "removed/unverified": 3,
+      "removed/rejected": 3,
+      "unchanged/confirmed": 15
+    },
+    "n_objects": {
+      "A": 22,
+      "B": 14
+    },
+    "alignment_rmse": 0.02249750683489552,
+    "warnings": [
+      "used changes/changes_vis.json (later stages not run)"
+    ]
+  }
+}

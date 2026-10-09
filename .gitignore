@@ -1,0 +1,13 @@
+runs/
+checkpoints/
+*.rrd
+!examples/**/*.rrd
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Raw recordings (hundreds of MB) — shared via download link, not git
+vid*/
+data/recordings/

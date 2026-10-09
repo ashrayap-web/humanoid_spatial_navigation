@@ -1,0 +1,155 @@
+# Default configuration. Every threshold and model choice lives here (spec Section 0.8).
+# Override any key from the CLI with --set section.key=value.
+# Values for components not built yet are placeholders and will be tuned when they are built.
+
+seed: 0
+
+frames:            # C1
+  fps: 3                    # keep the sharpest frame in each 1/fps-second window
+  blur_ratio: 0.7           # drop a frame if sharpness < ratio x median of its neighbours ...
+  blur_window: 5            # ... looking this many kept candidates either side
+  min_trans_m: 0.05         # Record3D: drop frame if moved less than this ...
+  min_rot_deg: 5.0          # ... and rotated less than this since the last kept frame
+  min_diff: 0.05            # video: drop near-duplicate frames (mean abs grayscale diff, 0-1)
+  max_per_session: 100
+  max_side: 1024
+
+recon:             # C2
+  method: record3d          # record3d | mast3r | vggt | separate (only record3d implemented)
+  voxel_size: 0.02          # m, fused session clouds
+  max_depth: 4.0            # m, LiDAR is unreliable further out
+  edge_rel_thresh: 0.05     # flying pixel: depth jump to a neighbour > this x own depth
+  reproj_tol: 0.03          # m, max median residual of the pose-convention sanity check
+  floor_bin: 0.02           # m, height histogram bin / RANSAC inlier distance for the floor
+  floor_min_frac: 0.3       # floor = lowest height bin with >= this x the fullest bin's count
+  outlier_nb: 20            # statistical outlier removal: neighbours ...
+  outlier_std: 2.0          # ... and std ratio
+  coarse_cell: 0.05         # m, top-down occupancy grid for the coarse yaw search
+  coarse_z_range: [0.1, 2.0]  # m, heights used for the top-down grid (walls, furniture)
+  yaw_step_deg: 2.0         # coarse yaw search step for B -> A registration
+  coarse_top_k: 3           # yaw candidates refined with ICP
+  icp_voxel: 0.04           # m, clouds are downsampled to this for ICP
+  icp_max_dist: 0.05        # m, final correspondence cut-off (and RMSE inlier distance)
+  static_thresh: 0.05       # m, cross-session NN distance to count as background
+  conf_thresh: 1.5          # learned methods only
+  scale_factor: 1.0         # learned methods only
+  max_frames_joint: 120     # learned methods only (GPU memory)
+
+detect:            # C3
+  mode: grounded_sam        # grounded_sam | sam_auto (only grounded_sam implemented)
+  detector_model: IDEA-Research/grounding-dino-base
+  segmenter_model: facebook/sam2.1-hiera-large
+  device: auto              # auto | cuda | cpu
+  vocabulary: [chair, table, desk, sofa, bed, lamp, box, backpack, bag, mug, bottle, laptop,
+               monitor, tv, keyboard, plant, book, bin, shoe, pillow, jacket, chest of drawers,
+               computer tower, picture frame]
+  structural: [wall, floor, ceiling, window, door, curtain]  # prompted, then dropped
+  min_score: 0.3            # best per-phrase token probability of a box
+  min_mask_px: 400          # at the C1 image resolution (720x960)
+  max_border_frac: 0.5      # drop masks whose outline is mostly on the image border
+  mask_nms_iou: 0.7
+  batch_size: 8             # frames per Grounding DINO forward pass
+  debug_every: 10           # write an overlay for every n-th frame
+
+fusion:            # C4
+  clip_model: openai/clip-vit-large-patch14
+  dino_model: facebook/dinov2-base
+  embed_batch: 32
+  crop_pad: 0.1             # crop padding (fraction of the mask's box) for embeddings
+  erode_px: 5               # mask erosion before lifting (avoids depth bleeding at edges)
+  ring_px: 15               # see-through filter: ring around the mask = its surroundings ...
+  behind_margin: 0.25       # ... masked depth > ring median + this (m) is dropped (TV reflections)
+  pixel_stride: 4           # lift every n-th mask pixel (depth is ~3.75x upsampled)
+  min_segment_points: 30    # segments with fewer 3D points (after cleaning) are skipped
+  dbscan_eps: 0.05          # m, per-segment outlier removal: keep the largest cluster
+  dbscan_min_points: 8
+  voxel_size: 0.02          # m, object point clouds and overlap tests
+  overlap_thresh: 0.3       # fraction of a segment's voxels next to an object's voxels
+  sim_thresh: 0.75          # CLIP cosine to associate a segment with an object
+  min_observations: 3       # frames an object must be seen in
+  merge_iou: 0.5            # post-process: merge objects whose 3D boxes overlap this much ...
+                            # ... (or overlap_thresh of voxels) and whose labels/CLIP agree
+  contain_frac: 0.6         # ... or, whatever the labels, if this much of the smaller one's
+                            # voxels lie on the larger one (parts, pictures inside a frame)
+  max_object_extent: 3.0    # m
+
+match:             # C5 — cost = sum of weighted terms (see project_spec C5)
+  w_sem: 3.0                # CLIP (1 - cos). High weight: CLIP cos is ~0.8 even for different
+                            # objects on `main`, ~0.97+ for the same object
+  w_app: 1.0                # DINOv2 (1 - cos): ~0.1 same object, ~0.85 different
+  w_geo: 0.5                # min(distance / max_move_dist, 1) — low so moved objects still match
+  w_size: 0.1               # |log volume ratio| — low: partial views make box volumes noisy
+  w_label: 0.3              # labels differ for the same object (monitor/laptop) across sessions
+  max_cost: 1.0             # gate: costlier pairs are unmatched
+  max_move_dist: 3.0        # m
+  move_thresh_m: 0.15
+  rot_thresh_deg: 20.0
+  replace_dist: 0.3         # m, REMOVED + ADDED closer than this -> REPLACED
+  same_space_frac: 0.8      # unmatched object whose voxels overlap an object of the other
+                            # session this much is "still there" (fused differently) -> UNCHANGED
+  same_space_min_dino: 0.5  # ... and DINOv2 cos >= this (else it may be a REPLACED object)
+  voxel_size: 0.02          # m, for the same-space overlap
+  ambiguous_margin: 0.2     # log matches whose second-best cost is this close
+  icp_voxel: 0.02           # m, object clouds downsampled for ICP
+  icp_max_dist: 0.05        # m, final ICP correspondence distance
+  icp_yaw_inits_deg: [0, 90, 180, 270]
+  stay_margin: 0.1          # a move must beat "stayed put" by this inlier fraction
+
+visibility:        # C6
+  margin: 0.05              # m, |observed depth - point depth| counted as "at the point"
+  vote_ratio: 3.0           # a point is free/occupied if those votes outnumber the other 3:1
+  confirm_free_frac: 0.5    # >= this fraction of the object's space seen empty -> CONFIRMED
+  reject_occ_frac: 0.5      # >= this fraction seen occupied -> REJECTED (object still there)
+  point_subsample: 2000     # points per object tested
+  max_cameras: 10           # supporting cameras stored per check (C7 uses them for evidence)
+  unreliable_labels: [tv, monitor]  # depth under these C3 masks is ignored (glossy: mirror image)
+
+vlm:               # C7
+  enabled: true
+  provider: anthropic
+  model: claude-opus-5-5
+  reject_conf: 0.8
+  max_calls: 50
+  prompt_version: 1
+
+report:            # C8
+  mode: template            # template | llm (llm: TODO, C8 full)
+  landmark_k: 2             # llm mode: landmarks per change (unused in template mode)
+  language_style: concise
+  on_tol: 0.10              # m, "on X": object bottom within this of X's top (or of the floor)
+  next_to_dist: 0.30        # m, box gap for "next to X"
+  near_dist: 1.5            # m, beyond this no landmark is mentioned
+
+nav:               # C9
+  cell_size: 0.05           # m
+  robot_height: 1.2         # m
+  robot_radius: 0.25        # m
+  min_z: 0.05               # m
+  start: null               # [x, y] in world frame, null = automatic
+  goal: null
+  unknown_is_free: false
+
+viz:               # C10
+  colors:
+    session_a: [66, 133, 244]     # "before" camera path
+    session_b: [255, 152, 0]      # "after" camera path
+    removed: [229, 57, 53]
+    added: [67, 160, 71]
+    moved: [30, 136, 229]
+    replaced: [142, 36, 170]
+    unverified: [158, 158, 158]
+    unchanged: [150, 165, 190]
+    background: [200, 200, 200]
+  point_size: 0.01          # m, radius of change points (background / unchanged: half)
+  background_voxel: 0.03    # m, background downsampling (keeps final.rrd small)
+  max_evidence: 2           # confirmed changes whose "before" image is shown
+  hero_dpi: 110
+  gif_frames: 36
+  gif_points: 25000
+  gif_max_z: 1.6             # m, background above this is hidden in the GIF (see inside)
+  gif_dpi: 90
+  top_down_resolution: 1024 # unused (matplotlib figure sizes are fixed)
+
+eval:              # C11
+  pos_tol: 0.5              # m
+  label_sim_thresh: 0.8

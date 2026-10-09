@@ -1,0 +1,7 @@
+{
+  "pair": "main",
+  "changes": [
+    {"type": "removed", "label": "bag", "note": "black bag lying on the bed, near the window end"}
+  ],
+  "expected_unverified": []
+}
