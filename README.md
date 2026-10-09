@@ -31,7 +31,7 @@ to `runs/demo/`:
 |---|---|
 | `report/report.md` | human-readable report (summary, table, one sentence per change, evidence images) |
 | `report/changes.json` | the same as structured data (`ChangeReport`) |
-| `viz/final.rrd` | interactive 3D viewer: `uv run rerun runs/demo/viz/final.rrd` |
+| `viz/final.rrd` | interactive 3D viewer: `uv run rerun runs/demo/viz/final.rrd` (scrub the `scene` timeline for before ↔ after) |
 | `viz/hero.png`, `viz/hero.gif` | static top-down map and orbit animation |
 
 The whole pipeline takes **about 3 minutes** on an L40S for two ~70 s recordings, and later runs
@@ -40,7 +40,7 @@ recompute everything, and `--set section.key=value` to override any setting in
 `configs/default.yaml`. Every stage can also run on its own (`… cli c3 --run demo`).
 
 **Viewing over SSH:** `uv run rerun --web-viewer runs/demo/viz/final.rrd` serves a browser viewer.
-Forward its port, or copy the `.rrd` (2 MB) to your laptop and run `rerun final.rrd`.
+Forward its port, or copy the `.rrd` (~6 MB) to your laptop and run `rerun final.rrd`.
 
 **Optional visual double-check (C7):** put `ANTHROPIC_API_KEY=…` in a `.env` file in the repo
 root (git-ignored; loaded automatically), export it, or run `ant auth login` before `all`, or add it later and run `… cli c7 --run demo --force` then
@@ -169,9 +169,16 @@ to a template ("has been removed" / "may have been removed" / "seemed to have be
 the evidence). The fact list is shown under each change in `report.md`, so every sentence can be
 checked.
 
-**C10 — Viewer.** A rerun recording that opens with a fixed layout: the 3D scene (changes coloured
-by type, unchanged objects dimmed, both camera paths), the report, and a "before" photo of each
-confirmed change.
+**C10 — Viewer.** A rerun recording that opens with a fixed layout:
+- the 3D scene: changes coloured by type, unchanged objects dimmed, both camera paths;
+- the report;
+- a tab per change with its evidence image (the C7 before/after pair).
+
+Two timelines:
+- **`scene`**: step between the full *before* scan and the full *after* scan; removed objects
+  vanish and added ones appear.
+- **`animation`**: removed objects dissolve, added ones materialise, and moved ones glide and turn
+  from their old pose to their new one.
 
 ---
 

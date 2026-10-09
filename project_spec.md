@@ -44,7 +44,7 @@ Only build that component. Do not implement future components early.
 | C7  | VLM change verification                 | done        | Core      |
 | C8  | Semantic description & report           | done (template + LLM) | MVP (basic) / Core (full) |
 | C9  | Navigation impact analysis              | not started | Stretch   |
-| C10 | Interactive visualization               | basic done (+ hero.png/gif); full not started | MVP (basic) / Core (full) |
+| C10 | Interactive visualization               | done (nav overlay waits for C9) | MVP (basic) / Core (full) |
 | C11 | Evaluation against ground truth         | done        | Core      |
 | C12 | End-to-end CLI, packaging, README       | done (sample-data link TBD) | MVP       |
 
@@ -1063,6 +1063,18 @@ README needs them: `hero.png` (top-down map + evidence crop + summary, matplotli
 `visualize(run, open_viewer=True, force=False)` — `force` added for CLI uniformity; the viewer is
 spawned only if `$DISPLAY` is set, else the `rerun --web-viewer` command is printed.
 
+**Full as built (2026-10-09):** timelines `scene` (0 = full scan A + changed objects as they were,
+1 = scan B + objects as they are; removed objects `rr.Clear`ed, added ones appear; a
+"BEFORE/AFTER" title point) and `animation` (`viz.anim_frames` = 30: removed objects dissolve by
+subsampling, added ones materialise, moved ones follow `interpolate_motion` — linear translation
+and yaw about the object's own centre, exact at t = 0 and 1). Static context: grey background,
+camera paths, dimmed unchanged objects (de-duplicated), labelled boxes, move arrows. Evidence:
+`evidence/<change id>` holds the C7 before/after pair (fallback: the object crop), shown as one
+tab per change. The blueprint opens on the `scene` timeline with the time panel expanded and the
+blueprint/selection panels collapsed. hero.png/gif unchanged (matplotlib). On `main`: 5.6 MB,
+`rerun rrd verify` passes; entity/timeline layout checked by reading the file back (`rerun rrd
+print`). Not checked visually — no display on the dev machine. TODO(C9): navigation grid/paths.
+
 ---
 
 ### C11 — Evaluation against ground truth
@@ -1234,6 +1246,8 @@ Append one entry per finished component: date, component, decision, reason.
 | 2026-10-09 | C8 | Automatic grounding check (numbers ⊂ facts, object named) with per-sentence template fallback | Makes "only these facts" enforceable instead of a prompt request; any hallucinated distance is caught |
 | 2026-10-09 | C8 | LLM writes only confirmed/unverified sentences + summary; rejected and unchanged keep templates | Fewer tokens; the appendix is mechanical |
 | 2026-10-09 | C8 | Confirmed sentences must end with their key evidence (prompt v2) | v1 dropped the "84% seen empty" evidence, which is what makes a sentence checkable |
+| 2026-10-09 | C10 | `scene` timeline shows the real scans (RGB) on top of the static grey background | Scrubbing 0 ↔ 1 shows the room as it actually looked; the grey static layer keeps context on the `animation` timeline |
+| 2026-10-09 | C10 | Moved objects interpolate about their own centre, not the world origin | A world-origin yaw would swing the object around the room mid-animation |
 
 ---
 

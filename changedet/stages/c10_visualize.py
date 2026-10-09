@@ -1,9 +1,15 @@
 """C10 — Visualization: one rerun recording with a ready-made layout, plus README images.
 
-``viz/final.rrd`` opens with: the 3D scene (grey background, camera paths of both recordings,
-changed objects coloured by type, unchanged objects dimmed), the report text, and the "before"
-image of each confirmed change. ``viz/hero.png`` (top-down + evidence) and ``viz/hero.gif``
-(orbit) are static versions for the README.
+``viz/final.rrd`` opens with the 3D scene, the report and a tab of evidence images per change
+(the C7 before/after pair, or the object's crop). Two timelines:
+
+- ``scene``: step 0 shows the full first scan and the changed objects as they were, step 1 the
+  second scan and the objects as they are (removed ones vanish, added ones appear),
+- ``animation``: removed objects dissolve, added ones materialise, moved ones glide and turn
+  from their old to their new pose.
+
+Context (grey background, camera paths, dimmed unchanged objects, labelled boxes, arrows) is
+static. ``viz/hero.png`` (top-down + evidence) and ``viz/hero.gif`` (orbit) are for the README.
 """
 
 from __future__ import annotations
@@ -73,35 +79,75 @@ def _split(changes: list[Change]):
     return shown, unchanged, rejected
 
 
+def interpolate_motion(
+    points: np.ndarray, centre_a: np.ndarray, T_a_to_b: np.ndarray, t: float
+) -> np.ndarray:
+    """Points of a moved object at fraction ``t`` (0 = before, 1 = after) of its motion.
+
+    Translation and yaw are interpolated linearly about the object's own centre, so the object
+    glides and turns in place instead of swinging around the world origin.
+    """
+    end = geo.transform_points(T_a_to_b, centre_a[None])[0]
+    yaw = geo.yaw_of(T_a_to_b[:3, :3])
+    R = geo.rot_z(t * yaw)
+    return (points - centre_a) @ R.T + centre_a + t * (end - centre_a)
+
+
+def _subsample(points: np.ndarray, fraction: float, seed: int = 0) -> np.ndarray:
+    n = int(round(len(points) * float(np.clip(fraction, 0, 1))))
+    return points[np.random.default_rng(seed).permutation(len(points))[:n]]
+
+
+def _evidence_image(run: str, change: Change, objects: dict[str, Object3D]):
+    """Path of the best evidence image for a change: C7 before/after pair, else the crop."""
+    pair = run_path(run, f"viz/c7_evidence/{change.id}.jpg")
+    if pair.exists():
+        return pair
+    return run_dir(run) / objects[change.object_a or change.object_b].best_crop_path
+
+
 def write_rrd(run: str, changes, summary, objects: dict[str, Object3D], recon, cfg) -> str:
+    """``viz/final.rrd``: static scene + a "scene" timeline (0 = before, 1 = after) + an
+    "animation" timeline morphing before into after, with evidence images per change."""
     import rerun as rr
     import rerun.blueprint as rrb
 
+    from changedet.core.cache import load_ply
+
     shown, unchanged, rejected = _split(changes)
-    evidence = [c for c in shown if c.confidence is Confidence.CONFIRMED][: cfg.max_evidence]
     blueprint = rrb.Blueprint(
         rrb.Horizontal(
             rrb.Spatial3DView(origin="world", name="Changes in 3D"),
             rrb.Vertical(
                 rrb.TextDocumentView(origin="report", name="Report"),
-                *[
-                    rrb.Spatial2DView(origin=f"evidence/{c.id}", name=f"{c.id}: {c.label} (before)")
-                    for c in evidence
-                ],
+                rrb.Tabs(
+                    *[
+                        rrb.Spatial2DView(origin=f"evidence/{c.id}", name=f"{c.id}: {c.label}")
+                        for c in shown
+                    ],
+                    name="Evidence",
+                )
+                if shown
+                else rrb.TextDocumentView(origin="report"),
+                row_shares=[1, 1],
             ),
             column_shares=[3, 1],
         ),
-        collapse_panels=True,
+        rrb.TimePanel(timeline="scene", state="expanded"),
+        rrb.BlueprintPanel(state="collapsed"),
+        rrb.SelectionPanel(state="collapsed"),
     )
     path = run_path(run, FINAL_RRD)
     rec = rr.RecordingStream("changedet")
     rec.save(path, default_blueprint=blueprint)
+
+    # --- static: context that is the same before and after
     rec.log("world", rr.ViewCoordinates.RIGHT_HAND_Z_UP, static=True)
     background, _ = load_ply(run_path(run, recon.background_cloud_path))
     background = geo.voxel_downsample(background, cfg.background_voxel)
     rec.log(
         "world/background",
-        rr.Points3D(background, colors=cfg.colors.background, radii=cfg.point_size * 0.5),
+        rr.Points3D(background, colors=cfg.colors.background, radii=cfg.point_size * 0.4),
         static=True,
     )
     for s, key in (("A", "session_a"), ("B", "session_b")):
@@ -112,32 +158,39 @@ def write_rrd(run: str, changes, summary, objects: dict[str, Object3D], recon, c
             rr.LineStrips3D([centres], colors=cfg.colors[key], labels=[f"{name} recording"]),
             static=True,
         )
-    for c in unchanged:
-        o = objects[c.object_b or c.object_a]
+    for oid in dict.fromkeys(c.object_b or c.object_a for c in unchanged):  # unique, in order
+        o = objects[oid]
         points, _ = load_ply(run_path(run, o.points_path))
         rec.log(
             f"world/unchanged/{o.label.replace(' ', '_')}_{o.id}",
             rr.Points3D(points, colors=cfg.colors.unchanged, radii=cfg.point_size * 0.5),
             static=True,
         )
+
+    points_of = {}
     for c in shown:
-        colour = colour_of(c, cfg.colors)
-        base = f"world/changes/{c.id}_{c.label.replace(' ', '_').replace('->', '_to_')}"
+        for oid in (c.object_a, c.object_b):
+            if oid:
+                points_of[oid] = load_ply(run_path(run, objects[oid].points_path))[0]
+    base_of = {
+        c.id: f"world/changes/{c.id}_{c.label.replace(' ', '_').replace('->', '_to_')}"
+        for c in shown
+    }
+    for c in shown:  # boxes, labels, arrows and evidence never change over time
+        colour, base = colour_of(c, cfg.colors), base_of[c.id]
         for side, oid in (("before", c.object_a), ("after", c.object_b)):
             if oid is None:
                 continue
             faded = c.type in (ChangeType.MOVED, ChangeType.REPLACED) and side == "before"
             col = (colour * 0.4 + 255 * 0.6).astype(np.uint8) if faded else colour
             o = objects[oid]
-            points, _ = load_ply(run_path(run, o.points_path))
             rec.log(
-                f"{base}/{side}", rr.Points3D(points, colors=col, radii=cfg.point_size), static=True
-            )
-            label = caption(c) if not faded else f"{c.label} (before)"
-            rec.log(
-                f"{base}/{side}/box",
+                f"{base}/box_{side}",
                 rr.Boxes3D(
-                    mins=[o.bbox_min], sizes=[o.bbox_max - o.bbox_min], colors=col, labels=[label]
+                    mins=[o.bbox_min],
+                    sizes=[o.bbox_max - o.bbox_min],
+                    colors=col,
+                    labels=[caption(c) if not faded else f"{c.label} (before)"],
                 ),
                 static=True,
             )
@@ -149,10 +202,8 @@ def write_rrd(run: str, changes, summary, objects: dict[str, Object3D], recon, c
                 ),
                 static=True,
             )
-    for c in evidence:
-        o = objects[c.object_a or c.object_b]
         rec.log(
-            f"evidence/{c.id}", rr.EncodedImage(path=run_dir(run) / o.best_crop_path), static=True
+            f"evidence/{c.id}", rr.EncodedImage(path=_evidence_image(run, c, objects)), static=True
         )
     rec.log(
         "report",
@@ -161,6 +212,50 @@ def write_rrd(run: str, changes, summary, objects: dict[str, Object3D], recon, c
         ),
         static=True,
     )
+
+    # --- "scene" timeline: the full scan and the changed objects before (0) and after (1)
+    lo, hi = background.min(axis=0), background.max(axis=0)
+    label_at = [[(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, hi[2] + 0.3]]
+    for t, session, title in (
+        (0, "A", "BEFORE (first recording)"),
+        (1, "B", "AFTER (second recording)"),
+    ):
+        rec.set_time("scene", sequence=t)
+        cloud, colours = load_ply(run_path(run, recon.cloud_paths[session]))
+        cloud, colours = geo.voxel_downsample(cloud, cfg.background_voxel, colours)
+        rec.log("world/scan", rr.Points3D(cloud, colors=colours, radii=cfg.point_size * 0.5))
+        rec.log("world/scene_title", rr.Points3D(label_at, labels=[title], radii=0.001))
+        for c in shown:
+            oid = c.object_a if session == "A" else c.object_b
+            entity = f"{base_of[c.id]}/object"
+            if oid is None:
+                rec.log(entity, rr.Clear(recursive=False))
+            else:
+                rec.log(
+                    entity,
+                    rr.Points3D(
+                        points_of[oid], colors=colour_of(c, cfg.colors), radii=cfg.point_size
+                    ),
+                )
+
+    # --- "animation" timeline: removed objects dissolve, added ones appear, moved ones travel
+    for k in range(cfg.anim_frames):
+        t = k / max(1, cfg.anim_frames - 1)
+        rec.set_time("animation", sequence=k)
+        for c in shown:
+            colour, entity = colour_of(c, cfg.colors), f"{base_of[c.id]}/animated"
+            if c.type is ChangeType.MOVED and c.T_a_to_b is not None:
+                pts = interpolate_motion(points_of[c.object_a], c.position_a, c.T_a_to_b, t)
+            elif c.type is ChangeType.REMOVED:
+                pts = _subsample(points_of[c.object_a], 1 - t)
+            elif c.type is ChangeType.ADDED:
+                pts = _subsample(points_of[c.object_b], t)
+            else:  # replaced: old dissolves while new appears
+                pts = np.vstack(
+                    [_subsample(points_of[c.object_a], 1 - t), _subsample(points_of[c.object_b], t)]
+                )
+            rec.log(entity, rr.Points3D(pts, colors=colour, radii=cfg.point_size))
+    # TODO(C9): navigation grid and paths.
     return str(path)
 
 

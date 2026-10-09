@@ -154,6 +154,7 @@ viz:               # C10
   point_size: 0.01          # m, radius of change points (background / unchanged: half)
   background_voxel: 0.03    # m, background downsampling (keeps final.rrd small)
   max_evidence: 2           # confirmed changes whose "before" image is shown
+  anim_frames: 30           # steps on the "animation" timeline (before -> after)
   hero_dpi: 110
   gif_frames: 36
   gif_points: 25000

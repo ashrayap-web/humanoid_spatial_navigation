@@ -41,8 +41,15 @@ def make_synthetic_run(rng) -> None:
     for s in "AB":
         for k, cam in enumerate(cams[s]):
             cam.T_world_cam[:3, 3] = [k * 0.3, 0, 1.3]
+    for s in "AB":
+        cache.save_ply(cache.run_path(RUN, f"recon/cloud_{s}.ply"), room, np.full_like(room, 0.4))
     recon = Reconstruction(
-        cams, {"A": "", "B": ""}, "recon/background.ply", np.array([0, 0, 1.0, 0]), True, 0.01
+        cams,
+        {s: f"recon/cloud_{s}.ply" for s in "AB"},
+        "recon/background.ply",
+        np.array([0, 0, 1.0, 0]),
+        True,
+        0.01,
     )
     cache.save_json(cache.run_path(RUN, "recon/reconstruction.json"), recon)
 
@@ -117,6 +124,58 @@ def test_visualize_builds_rrd_and_hero_images() -> None:
     assert path.endswith("viz/final.rrd")
     for rel in ("viz/final.rrd", "viz/hero.png", "viz/hero.gif"):
         assert cache.run_path(RUN, rel).stat().st_size > 1000, rel
+
+
+def test_interpolate_motion() -> None:
+    from changedet.core import geometry as geo
+    from changedet.stages.c10_visualize import interpolate_motion
+
+    pts = np.array([[1.0, 0, 0.5], [1.2, 0, 0.5], [1.0, 0.3, 0.5]])
+    centre = pts.mean(axis=0)
+    T = geo.make_T(geo.rot_z(np.radians(90)), [2.0, 1.0, 0]) @ geo.make_T(t=-centre)
+    T = geo.make_T(t=centre) @ T  # turn 90 deg about the object's centre, then shift (2, 1)
+    np.testing.assert_allclose(interpolate_motion(pts, centre, T, 0.0), pts, atol=1e-9)
+    np.testing.assert_allclose(
+        interpolate_motion(pts, centre, T, 1.0), geo.transform_points(T, pts), atol=1e-9
+    )
+    half = interpolate_motion(pts, centre, T, 0.5)
+    np.testing.assert_allclose(half.mean(axis=0), centre + [1.0, 0.5, 0], atol=1e-9)
+
+
+def test_visualize_with_moved_change_has_timelines() -> None:
+    from changedet.core import geometry as geo
+    from changedet.stages.c10_visualize import visualize
+
+    make_synthetic_run(np.random.default_rng(1))
+    changes = [
+        Change.from_dict(d)
+        for d in cache.load_json(cache.run_path(RUN, "changes/changes_vis.json"))
+    ]
+    a, b = (
+        cache.load_json(cache.run_path(RUN, "objects/objects_A.json"))[0],
+        cache.load_json(cache.run_path(RUN, "objects/objects_B.json"))[1],
+    )
+    T = geo.make_T(geo.rot_z(0.5), np.array(b["centroid"]) - np.array(a["centroid"]))
+    changes.append(
+        Change(
+            "chg_003",
+            ChangeType.MOVED,
+            "thing",
+            a["id"],
+            b["id"],
+            np.array(a["centroid"]),
+            np.array(b["centroid"]),
+            T[:3, 3],
+            28.6,
+            T,
+            0.1,
+            Confidence.CONFIRMED,
+            description="Moved.",
+        )
+    )
+    cache.save_json(cache.run_path(RUN, "changes/changes_vis.json"), changes)
+    path = visualize(RUN, open_viewer=False)
+    assert cache.run_path(RUN, "viz/final.rrd").stat().st_size > 1000 and path.endswith(".rrd")
 
 
 def test_all_runs_stages_in_order_with_from(monkeypatch, record3d_export) -> None:
